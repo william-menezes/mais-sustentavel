@@ -1,0 +1,42 @@
+name: mais-sustentavel
+
+# Ambiente de DESENVOLVIMENTO local.
+# Em homologação/produção o banco é o Supabase (Postgres gerenciado, com RLS)
+# e a API roda na Render — ver docs/workflow.md e constitution.md (Art. 1.2).
+
+services:
+  db:
+    image: postgres:16
+    container_name: mais-sustentavel-db
+    environment:
+      POSTGRES_DB: mais_sustentavel
+      POSTGRES_USER: mais_sustentavel
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mais_sustentavel}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mais_sustentavel -d mais_sustentavel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    container_name: mais-sustentavel-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mais_sustentavel
+      SPRING_DATASOURCE_USERNAME: mais_sustentavel
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-mais_sustentavel}
+      PORT: 8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  db-data:

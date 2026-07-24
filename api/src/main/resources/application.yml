@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: mais-sustentavel-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mais_sustentavel}
+    username: ${SPRING_DATASOURCE_USERNAME:mais_sustentavel}
+    password: ${SPRING_DATASOURCE_PASSWORD:mais_sustentavel}
+  jpa:
+    hibernate:
+      # O schema é governado pelo Flyway; o Hibernate apenas valida.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+# Render injeta a porta via variável PORT; localmente cai em 8080.
+server:
+  port: ${PORT:8080}
+
+# Actuator: apenas health e info expostos (baseline de segurança, Art. 7).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

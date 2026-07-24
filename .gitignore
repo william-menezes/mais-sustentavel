@@ -1,0 +1,29 @@
+# ===== Segredos / ambiente =====
+.env
+.env.*
+!.env.example
+
+# ===== Java / Maven (api) =====
+api/target/
+*.class
+
+# ===== Node / Angular (frontend) =====
+node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.vercel/
+
+# ===== IDE / Editor =====
+.idea/
+*.iml
+.vs/
+*.swp
+
+# ===== Sistema operacional =====
+.DS_Store
+Thumbs.db
+
+# ===== Claude Code / Spec Kit — ignorar apenas configs e credenciais locais =====
+# (os skills em .claude/skills e a infra do Spec Kit em .specify SÃO versionados)
+.claude/settings.local.json
+.claude/**/*.local.json

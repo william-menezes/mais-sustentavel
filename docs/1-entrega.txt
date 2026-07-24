@@ -1,0 +1,14 @@
+# PDS 2026/1
+
+## Trabalho final
+
+### Entrega inicial
+
+#### Integrantes:
+- William Menezes Damascena - 12521BSI233
+
+#### Tema
+Plataforma web para gestão de logística reversa de óleo de cozinha usado
+
+#### Descrição
+Aplicação web para gerenciar a coleta de óleo de cozinha usado em condomínios e empresas para fins de reciclagem. O sistema possui dois perfis de usuário: o administrador da operação, que cadastra pontos de coleta, gerencia usuários e acompanha os volumes coletados e os pedidos de coleta; e o responsável pelo ponto de coleta (síndico ou administrador do local), que registra as entregas de óleo por unidade, solicita a coleta e consulta o histórico. A aplicação também inclui uma landing page institucional com apresentação do modelo de negócio, parceiros e um mapa dos pontos de coleta. Será desenvolvida em Angular com PrimeNG no frontend com deploy na Vercel, API Restfull em Java/Spring hospedada no Render e Supabase como banco de dados PostgreSQL.
