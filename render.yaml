@@ -1,0 +1,26 @@
+# Blueprint da Render para a API (+ Sustentável).
+# Use em: Render Dashboard → New → Blueprint → aponte para este repositório.
+# Os segredos do banco (Supabase) ficam com sync:false — você os preenche no painel,
+# nunca neste arquivo (Art. 7.4).
+
+services:
+  - type: web
+    name: mais-sustentavel-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      # String de conexão do Supabase (Session pooler, porta 5432, com SSL).
+      # Ex.: jdbc:postgresql://aws-0-<regiao>.pooler.supabase.com:5432/postgres?sslmode=require
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      # Usuário do pooler: postgres.<project-ref>
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
