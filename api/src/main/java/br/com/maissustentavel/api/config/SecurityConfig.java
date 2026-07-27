@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -26,5 +28,15 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
         return http.build();
+    }
+
+    /**
+     * Sem usuários por enquanto: substitui o usuário padrão que o Spring Boot geraria
+     * (com senha aleatória impressa no log, imprópria para produção). A autenticação
+     * real (usuários, papéis, RLS) é implementada em AC-01.
+     */
+    @Bean
+    UserDetailsService userDetailsService() {
+        return new InMemoryUserDetailsManager();
     }
 }
