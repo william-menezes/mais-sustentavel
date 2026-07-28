@@ -6,6 +6,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -26,7 +27,8 @@ export const appConfig: ApplicationConfig = {
             order: 'theme, base, primeng'
           }
         }
-      }
+      },
+      license: environment.primengLicenseKey,
     })
   ]
 };
