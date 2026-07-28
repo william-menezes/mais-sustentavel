@@ -1,11 +1,11 @@
-package br.com.maissustentavel.api.acesso.web;
+package br.com.maissustentavel.api.auth.web;
 
-import br.com.maissustentavel.api.acesso.service.AutenticacaoService;
-import br.com.maissustentavel.api.acesso.service.LimitadorTentativasLogin;
-import br.com.maissustentavel.api.acesso.service.ResultadoAutenticacao;
-import br.com.maissustentavel.api.acesso.web.dto.ErroResponse;
-import br.com.maissustentavel.api.acesso.web.dto.LoginRequest;
-import br.com.maissustentavel.api.acesso.web.dto.LoginResponse;
+import br.com.maissustentavel.api.auth.service.AutenticacaoService;
+import br.com.maissustentavel.api.auth.service.LimitadorTentativasLogin;
+import br.com.maissustentavel.api.auth.service.ResultadoAutenticacao;
+import br.com.maissustentavel.api.auth.web.dto.ErroResponse;
+import br.com.maissustentavel.api.auth.web.dto.LoginRequest;
+import br.com.maissustentavel.api.auth.web.dto.LoginResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;

@@ -1,4 +1,4 @@
-package br.com.maissustentavel.api.acesso.web.dto;
+package br.com.maissustentavel.api.auth.web.dto;
 
 import java.util.Set;
 

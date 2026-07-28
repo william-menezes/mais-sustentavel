@@ -1,9 +1,9 @@
-package br.com.maissustentavel.api.acesso.bootstrap;
+package br.com.maissustentavel.api.auth.bootstrap;
 
-import br.com.maissustentavel.api.acesso.domain.Papel;
-import br.com.maissustentavel.api.acesso.domain.Usuario;
-import br.com.maissustentavel.api.acesso.repository.PapelRepository;
-import br.com.maissustentavel.api.acesso.repository.UsuarioRepository;
+import br.com.maissustentavel.api.auth.domain.Papel;
+import br.com.maissustentavel.api.auth.domain.Usuario;
+import br.com.maissustentavel.api.auth.repository.PapelRepository;
+import br.com.maissustentavel.api.auth.repository.UsuarioRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.env.Environment;

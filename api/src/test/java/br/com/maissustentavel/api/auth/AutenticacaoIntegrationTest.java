@@ -1,11 +1,11 @@
-package br.com.maissustentavel.api.acesso;
+package br.com.maissustentavel.api.auth;
 
 import br.com.maissustentavel.api.TestcontainersConfiguration;
-import br.com.maissustentavel.api.acesso.domain.Papel;
-import br.com.maissustentavel.api.acesso.domain.Usuario;
-import br.com.maissustentavel.api.acesso.repository.PapelRepository;
-import br.com.maissustentavel.api.acesso.repository.UsuarioRepository;
-import br.com.maissustentavel.api.acesso.service.LimitadorTentativasLogin;
+import br.com.maissustentavel.api.auth.domain.Papel;
+import br.com.maissustentavel.api.auth.domain.Usuario;
+import br.com.maissustentavel.api.auth.repository.PapelRepository;
+import br.com.maissustentavel.api.auth.repository.UsuarioRepository;
+import br.com.maissustentavel.api.auth.service.LimitadorTentativasLogin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
