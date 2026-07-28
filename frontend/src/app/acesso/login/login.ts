@@ -3,12 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
 import { AutenticacaoService } from '../autenticacao.service';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, ButtonModule, InputTextModule, MessageModule],
+  imports: [FormsModule, ButtonModule, InputTextModule, InputPasswordModule, MessageModule],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
