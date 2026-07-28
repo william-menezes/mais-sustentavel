@@ -35,8 +35,8 @@ Sem `[NEEDS CLARIFICATION]` pendentes (stack fixado pela constituição). Regist
 
 ## D6 — Hash de senha e rate limiting (etapas seguintes)
 
-- **Decisão**: `BCryptPasswordEncoder` (Spring Security) para `senha_hash`; **Bucket4j** para rate limiting no endpoint de login.
-- **Rationale**: BCrypt é o padrão do Spring Security; Bucket4j é leve e integra por filtro. Ambos entram nas subtarefas 4 (auth) — registrados aqui para coerência do plano.
+- **Decisão**: `BCryptPasswordEncoder` (Spring Security) para `senha_hash`; **rate limiting em memória (janela fixa por IP)** no endpoint de login (`LimitadorTentativasLogin`). **Bucket4j** fica como evolução (múltiplas instâncias / controle de burst / store distribuído).
+- **Rationale**: BCrypt é o padrão do Spring Security. Para o MVP mono-instância, um limitador em memória é suficiente, testável e sem dependência nova; Bucket4j entra quando houver mais de uma instância.
 - **Escopo desta etapa**: apenas a coluna `senha_hash` (tipo/formato) é definida agora; o encoder e o rate limit são implementados no login.
 
 ## D7 — Estratégia de teste (TDD)

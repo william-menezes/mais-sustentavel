@@ -1,0 +1,60 @@
+<main class="login">
+  <!-- Painel de marca (esquerda) -->
+  <section class="marca">
+    <div class="marca-topo">
+      <span class="plus">+</span>
+      <span class="wordmark">Sustentável</span>
+    </div>
+    <div class="marca-copy">
+      <h1>Cada litro soma.</h1>
+      <p>Logística reversa de óleo de cozinha usado — administre a operação em um só lugar.</p>
+    </div>
+  </section>
+
+  <!-- Formulário (direita) -->
+  <section class="painel">
+    <div class="form-card">
+      <h2>Entrar</h2>
+      <p class="subtitulo">Bem-vindo de volta. Acesse com suas credenciais.</p>
+
+      @if (erro()) {
+        <p-message severity="error" styleClass="erro-msg">{{ erro() }}</p-message>
+      }
+
+      <form (ngSubmit)="entrar()">
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input
+            pInputText
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="username"
+            placeholder="voce@exemplo.com"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            required
+          />
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <input
+            pInputPassword
+            id="senha"
+            name="senha"
+            autocomplete="current-password"
+            placeholder="Sua senha"
+            [ngModel]="senha()"
+            (ngModelChange)="senha.set($event)"
+            required
+          />
+        </div>
+
+        <button pButton type="submit" class="botao-entrar" [disabled]="carregando()">
+          {{ carregando() ? 'Entrando…' : 'Entrar' }}
+        </button>
+      </form>
+    </div>
+  </section>
+</main>
