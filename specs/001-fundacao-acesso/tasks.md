@@ -24,7 +24,7 @@ description: "Tarefas de implementação — Fundação de Acesso (AC-01)"
 
 **Purpose**: preparar a estrutura do módulo de acesso (o esqueleto Spring já existe do H01).
 
-- [ ] T001 [P] Criar a estrutura de pacotes do módulo em `api/src/main/java/br/com/maissustentavel/api/acesso/` (subpacotes `domain/` e `repository/`)
+- [x] T001 [P] Criar a estrutura de pacotes do módulo em `api/src/main/java/br/com/maissustentavel/api/acesso/` (subpacotes `domain/` e `repository/`)
 
 ---
 
@@ -46,17 +46,17 @@ description: "Tarefas de implementação — Fundação de Acesso (AC-01)"
 
 ### Tests for User Story 1 (TDD — escrever primeiro, ver falhar) ⚠️
 
-- [ ] T002 [P] [US1] `PapelRepositoryTest` — após migração há 4 papéis (Gestor, Responsável, Coletor, Doador) e só Gestor `ativo=true`, em `api/src/test/java/br/com/maissustentavel/api/acesso/PapelRepositoryTest.java`
-- [ ] T003 [P] [US1] `UsuarioPapelTest` — salvar um usuário com ≥2 papéis (N:N acumula) e rejeitar e-mail duplicado, em `api/src/test/java/br/com/maissustentavel/api/acesso/UsuarioPapelTest.java`
+- [x] T002 [P] [US1] `PapelRepositoryTest` — após migração há 4 papéis (Gestor, Responsável, Coletor, Doador) e só Gestor `ativo=true`, em `api/src/test/java/br/com/maissustentavel/api/acesso/PapelRepositoryTest.java`
+- [x] T003 [P] [US1] `UsuarioPapelTest` — salvar um usuário com ≥2 papéis (N:N acumula) e rejeitar e-mail duplicado, em `api/src/test/java/br/com/maissustentavel/api/acesso/UsuarioPapelTest.java`
 
 ### Implementation for User Story 1
 
-- [ ] T004 [P] [US1] Entidade `Papel` (id UUID, `nome` único, `ativo`) em `api/src/main/java/br/com/maissustentavel/api/acesso/domain/Papel.java`
-- [ ] T005 [US1] Entidade `Usuario` (id UUID, `nome`, `email` único, `senhaHash`, `criadoEm`; `@ManyToMany Set<Papel>` via `@JoinTable usuario_papel`) em `api/src/main/java/br/com/maissustentavel/api/acesso/domain/Usuario.java` (depende de T004)
-- [ ] T006 [P] [US1] `PapelRepository` (`findByNome`) em `api/src/main/java/br/com/maissustentavel/api/acesso/repository/PapelRepository.java` (depende de T004)
-- [ ] T007 [P] [US1] `UsuarioRepository` (`findByEmail`, `existsByEmail`) em `api/src/main/java/br/com/maissustentavel/api/acesso/repository/UsuarioRepository.java` (depende de T005)
-- [ ] T008 [P] [US1] Migração `V2__modelo_acesso.sql` — tabelas `papel`/`usuario`/`usuario_papel`, seed dos 4 papéis (só Gestor ativo) e `enable row level security` nas três, em `api/src/main/resources/db/migration/V2__modelo_acesso.sql`
-- [ ] T009 [US1] Rodar `mvn verify` no Docker e deixar os testes de US1 **verdes** (`ddl-auto=validate` confirma o mapeamento JPA × esquema Flyway)
+- [x] T004 [P] [US1] Entidade `Papel` (id UUID, `nome` único, `ativo`) em `api/src/main/java/br/com/maissustentavel/api/acesso/domain/Papel.java`
+- [x] T005 [US1] Entidade `Usuario` (id UUID, `nome`, `email` único, `senhaHash`, `criadoEm`; `@ManyToMany Set<Papel>` via `@JoinTable usuario_papel`) em `api/src/main/java/br/com/maissustentavel/api/acesso/domain/Usuario.java` (depende de T004)
+- [x] T006 [P] [US1] `PapelRepository` (`findByNome`) em `api/src/main/java/br/com/maissustentavel/api/acesso/repository/PapelRepository.java` (depende de T004)
+- [x] T007 [P] [US1] `UsuarioRepository` (`findByEmail`, `existsByEmail`) em `api/src/main/java/br/com/maissustentavel/api/acesso/repository/UsuarioRepository.java` (depende de T005)
+- [x] T008 [P] [US1] Migração `V2__modelo_acesso.sql` — tabelas `papel`/`usuario`/`usuario_papel`, seed dos 4 papéis (só Gestor ativo) e `enable row level security` nas três, em `api/src/main/resources/db/migration/V2__modelo_acesso.sql`
+- [x] T009 [US1] Rodar `mvn verify` no Docker e deixar os testes de US1 **verdes** (`ddl-auto=validate` confirma o mapeamento JPA × esquema Flyway)
 
 **Checkpoint**: modelagem completa e testável — **entregável do MVP**.
 
