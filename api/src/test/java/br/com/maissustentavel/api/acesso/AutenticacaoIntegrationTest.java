@@ -5,6 +5,7 @@ import br.com.maissustentavel.api.acesso.domain.Papel;
 import br.com.maissustentavel.api.acesso.domain.Usuario;
 import br.com.maissustentavel.api.acesso.repository.PapelRepository;
 import br.com.maissustentavel.api.acesso.repository.UsuarioRepository;
+import br.com.maissustentavel.api.acesso.service.LimitadorTentativasLogin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +37,13 @@ class AutenticacaoIntegrationTest {
     PapelRepository papelRepository;
     @Autowired
     PasswordEncoder passwordEncoder;
+    @Autowired
+    LimitadorTentativasLogin limitador;
 
     @BeforeEach
-    void limparUsuarios() {
+    void prepararCadaTeste() {
         usuarioRepository.deleteAll();
+        limitador.limpar();
     }
 
     private void criarGestor(String email, String senha) {
@@ -83,5 +87,16 @@ class AutenticacaoIntegrationTest {
     void logoutRetorna204() throws Exception {
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void excessoDeTentativasRetorna429() throws Exception {
+        String corpo = "{\"email\":\"x@teste.com\",\"senha\":\"errada\"}";
+        for (int i = 0; i < 10; i++) {
+            mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                    .andExpect(status().isUnauthorized());
+        }
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().is(429));
     }
 }

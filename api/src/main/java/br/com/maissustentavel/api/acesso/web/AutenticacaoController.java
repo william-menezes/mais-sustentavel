@@ -1,6 +1,7 @@
 package br.com.maissustentavel.api.acesso.web;
 
 import br.com.maissustentavel.api.acesso.service.AutenticacaoService;
+import br.com.maissustentavel.api.acesso.service.LimitadorTentativasLogin;
 import br.com.maissustentavel.api.acesso.service.ResultadoAutenticacao;
 import br.com.maissustentavel.api.acesso.web.dto.ErroResponse;
 import br.com.maissustentavel.api.acesso.web.dto.LoginRequest;
@@ -30,16 +31,23 @@ public class AutenticacaoController {
 
     private final AutenticacaoService autenticacaoService;
     private final SecurityContextRepository securityContextRepository;
+    private final LimitadorTentativasLogin limitador;
 
     public AutenticacaoController(AutenticacaoService autenticacaoService,
-                                  SecurityContextRepository securityContextRepository) {
+                                  SecurityContextRepository securityContextRepository,
+                                  LimitadorTentativasLogin limitador) {
         this.autenticacaoService = autenticacaoService;
         this.securityContextRepository = securityContextRepository;
+        this.limitador = limitador;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest requisicao,
                                    HttpServletRequest request, HttpServletResponse response) {
+        if (!limitador.permitir(request.getRemoteAddr())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new ErroResponse("Muitas tentativas de login. Aguarde um instante e tente novamente."));
+        }
         try {
             ResultadoAutenticacao resultado = autenticacaoService.autenticar(requisicao.email(), requisicao.senha());
             SecurityContext context = SecurityContextHolder.createEmptyContext();
