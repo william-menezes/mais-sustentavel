@@ -1,0 +1,125 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.login {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ---- Painel de marca (esquerda) ---- */
+.marca {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-xxl);
+  color: var(--color-on-dark);
+  background:
+    radial-gradient(circle at 25% 15%, rgba(95, 195, 214, 0.28), transparent 55%),
+    linear-gradient(160deg, var(--color-brand-floresta), var(--color-primary));
+}
+
+.marca-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.marca-topo .logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.marca-copy h1 {
+  font-family: var(--font-display);
+  color: var(--color-on-dark);
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin: 0 0 var(--space-sm);
+}
+
+.marca-copy p {
+  max-width: 34ch;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 16px;
+}
+
+/* ---- Painel do formulário (direita) ---- */
+.painel {
+  display: grid;
+  place-items: center;
+  padding: var(--space-xxl);
+  background: var(--color-canvas);
+}
+
+.form-card {
+  width: 100%;
+  max-width: 360px;
+}
+
+.form-card h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin: 0;
+}
+
+.subtitulo {
+  color: var(--color-slate);
+  margin: var(--space-xs) 0 var(--space-xl);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+}
+
+.campo label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-charcoal);
+}
+
+.campo input {
+  width: 100%;
+}
+
+/* IconField ocupa a largura toda; o ícone (toggle) fica clicável e discreto. */
+.campo p-iconfield {
+  display: block;
+  width: 100%;
+}
+
+.toggle-senha {
+  cursor: pointer;
+  color: var(--color-steel);
+}
+
+.botao-entrar {
+  width: 100%;
+  justify-content: center;
+}
+
+:host ::ng-deep .erro-msg {
+  width: 100%;
+  margin-bottom: var(--space-lg);
+}
+
+/* ---- Responsivo: oculta o painel de marca em telas estreitas ---- */
+@media (max-width: 860px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+  .marca {
+    display: none;
+  }
+}

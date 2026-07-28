@@ -35,6 +35,10 @@ services:
       SPRING_DATASOURCE_USERNAME: mais_sustentavel
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-mais_sustentavel}
       PORT: 8080
+      # Gestor inicial semeado no DEV (sobrescreva via infra/.env se quiser).
+      # Em produção, defina SEED_GESTOR_EMAIL/SEED_GESTOR_SENHA no painel da Render (segredos).
+      SEED_GESTOR_EMAIL: ${SEED_GESTOR_EMAIL:-gestor@maissustentavel.local}
+      SEED_GESTOR_SENHA: ${SEED_GESTOR_SENHA:-Gestor@123}
     ports:
       - "8080:8080"
 
