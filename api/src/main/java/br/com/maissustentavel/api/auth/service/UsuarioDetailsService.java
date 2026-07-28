@@ -1,7 +1,7 @@
-package br.com.maissustentavel.api.acesso.service;
+package br.com.maissustentavel.api.auth.service;
 
-import br.com.maissustentavel.api.acesso.domain.Usuario;
-import br.com.maissustentavel.api.acesso.repository.UsuarioRepository;
+import br.com.maissustentavel.api.auth.domain.Usuario;
+import br.com.maissustentavel.api.auth.repository.UsuarioRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

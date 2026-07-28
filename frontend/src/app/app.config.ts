@@ -6,6 +6,7 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,13 +18,17 @@ export const appConfig: ApplicationConfig = {
       theme: {
         preset: Aura,
         options: {
+          // Força o modo claro: nossas superfícies são claras (design system).
+          // A classe '.modo-escuro' nunca é aplicada, então o tema não segue o SO.
+          darkModeSelector: '.modo-escuro',
           // Evita conflito de especificidade com utilitários; camada dedicada ao PrimeNG.
           cssLayer: {
             name: 'primeng',
             order: 'theme, base, primeng'
           }
         }
-      }
+      },
+      license: environment.primengLicenseKey,
     })
   ]
 };

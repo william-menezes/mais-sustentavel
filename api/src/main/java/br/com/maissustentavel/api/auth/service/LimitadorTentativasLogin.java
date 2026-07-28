@@ -1,4 +1,4 @@
-package br.com.maissustentavel.api.acesso.service;
+package br.com.maissustentavel.api.auth.service;
 
 import org.springframework.stereotype.Component;
 

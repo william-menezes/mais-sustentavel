@@ -1,8 +1,8 @@
-package br.com.maissustentavel.api.acesso;
+package br.com.maissustentavel.api.auth;
 
 import br.com.maissustentavel.api.TestcontainersConfiguration;
-import br.com.maissustentavel.api.acesso.domain.Papel;
-import br.com.maissustentavel.api.acesso.repository.PapelRepository;
+import br.com.maissustentavel.api.auth.domain.Papel;
+import br.com.maissustentavel.api.auth.repository.PapelRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

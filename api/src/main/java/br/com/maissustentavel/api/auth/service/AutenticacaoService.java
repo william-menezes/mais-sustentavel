@@ -1,8 +1,8 @@
-package br.com.maissustentavel.api.acesso.service;
+package br.com.maissustentavel.api.auth.service;
 
-import br.com.maissustentavel.api.acesso.domain.Papel;
-import br.com.maissustentavel.api.acesso.domain.Usuario;
-import br.com.maissustentavel.api.acesso.repository.UsuarioRepository;
+import br.com.maissustentavel.api.auth.domain.Papel;
+import br.com.maissustentavel.api.auth.domain.Usuario;
+import br.com.maissustentavel.api.auth.repository.UsuarioRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

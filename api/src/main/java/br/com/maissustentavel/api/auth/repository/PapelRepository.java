@@ -1,6 +1,6 @@
-package br.com.maissustentavel.api.acesso.repository;
+package br.com.maissustentavel.api.auth.repository;
 
-import br.com.maissustentavel.api.acesso.domain.Papel;
+import br.com.maissustentavel.api.auth.domain.Papel;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

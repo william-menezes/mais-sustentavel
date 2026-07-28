@@ -1,4 +1,4 @@
-package br.com.maissustentavel.api.acesso.domain;
+package br.com.maissustentavel.api.auth.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -30,16 +30,11 @@
   font-size: 20px;
 }
 
-.marca-topo .plus {
-  display: inline-grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
+.marca-topo .logo {
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
-  background: var(--color-brand-verde);
-  color: var(--color-on-dark);
-  font-size: 22px;
-  line-height: 1;
+  object-fit: cover;
 }
 
 .marca-copy h1 {
@@ -96,6 +91,17 @@
 
 .campo input {
   width: 100%;
+}
+
+/* IconField ocupa a largura toda; o ícone (toggle) fica clicável e discreto. */
+.campo p-iconfield {
+  display: block;
+  width: 100%;
+}
+
+.toggle-senha {
+  cursor: pointer;
+  color: var(--color-steel);
 }
 
 .botao-entrar {
