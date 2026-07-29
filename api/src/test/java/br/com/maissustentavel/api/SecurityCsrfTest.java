@@ -1,6 +1,7 @@
 package br.com.maissustentavel.api;
 
 import br.com.maissustentavel.api.auth.service.LimitadorTentativasLogin;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -52,6 +54,17 @@ class SecurityCsrfTest {
         mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"naoexiste@teste.com\",\"senha\":\"y\"}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void escritaAutenticadaComCookieMasSemHeaderRetorna403() throws Exception {
+        // Reproduz o cenário observado ao vivo: sessão autenticada + cookie XSRF-TOKEN
+        // presente, mas SEM o header X-XSRF-TOKEN. O double-submit DEVE rejeitar (403).
+        mockMvc.perform(post("/api/locais").with(user("gestor"))
+                        .cookie(new Cookie("XSRF-TOKEN", "token-qualquer"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"X\",\"tipo\":\"OUTRO\",\"endereco\":\"Y\"}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
