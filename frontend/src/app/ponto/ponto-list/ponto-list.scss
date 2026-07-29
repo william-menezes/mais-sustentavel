@@ -1,0 +1,58 @@
+.pagina-pontos {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .cabecalho {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .titulo {
+      .voltar {
+        display: inline-block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        text-decoration: none;
+        opacity: 0.75;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+
+      p {
+        margin: 0.25rem 0 0;
+        opacity: 0.7;
+      }
+    }
+  }
+
+  .qr {
+    display: block;
+    border-radius: 6px;
+  }
+
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+  }
+
+  .acoes {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+
+  .vazio {
+    text-align: center;
+    padding: 2rem;
+    opacity: 0.7;
+  }
+}
