@@ -1,0 +1,60 @@
+<p-toast />
+
+<section class="pagina-locais">
+  <header class="cabecalho">
+    <div class="titulo">
+      <h1>Locais</h1>
+      <p>Instituições atendidas pela operação.</p>
+    </div>
+    <button pButton type="button" (click)="novo()">Novo local</button>
+  </header>
+
+  <div class="barra">
+    <p-selectbutton
+      [options]="opcoesVisao"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="verArquivados()"
+      (ngModelChange)="mudarVisao($event)"
+    />
+  </div>
+
+  <p-table [value]="locais()" dataKey="id" [loading]="carregando()" [tableStyle]="{ 'min-width': '40rem' }">
+    <ng-template #header>
+      <tr>
+        <th scope="col">Nome</th>
+        <th scope="col" style="width: 12rem">Tipo</th>
+        <th scope="col">Endereço</th>
+        <th scope="col" style="width: 14rem">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-local>
+      <tr>
+        <td>{{ local.nome }}</td>
+        <td><p-tag [value]="rotuloTipo(local.tipo)" severity="secondary" /></td>
+        <td>{{ local.endereco }}</td>
+        <td class="acoes">
+          <button pButton type="button" severity="secondary" variant="text" (click)="editar(local)">Editar</button>
+          @if (local.arquivado) {
+            <button pButton type="button" severity="secondary" variant="text" (click)="reativar(local)">Reativar</button>
+          } @else {
+            <button pButton type="button" severity="secondary" variant="text" (click)="arquivar(local)">Arquivar</button>
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="4" class="vazio">Nenhum local {{ verArquivados() ? 'arquivado' : 'ativo' }} por aqui.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<app-local-form
+  [visivel]="formVisivel()"
+  (visivelChange)="formVisivel.set($event)"
+  [local]="emEdicao()"
+  (salvo)="aoSalvar($event)"
+/>
