@@ -50,7 +50,31 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 - [ ] T009 [P] `LocalNaoEncontradoException` + `@RestControllerAdvice` global mapeando validação→400 (`campo→mensagem`) e não encontrado→404, sem vazar detalhes, em `.../local/web/` (FR-010/012, research D5)
 - [ ] T010 Rodar `mvn verify` no Docker e deixar `LocalRepositoryTest` (T003) **verde** (valida mapeamento JPA × esquema Flyway `V3`) (depende de T004–T007)
 
-**Checkpoint**: base de dados + persistência + contrato de erros prontos — as histórias podem começar.
+**Checkpoint**: base de dados + persistência + contrato de erros prontos.
+
+---
+
+## Phase 2b: Endurecimento de Autenticação — CSRF/CORS (Blocking para escrita)
+
+**Purpose**: viabilizar com segurança os primeiros endpoints de **escrita** autenticados. Mantém a sessão atual (sem migrar mecanismo) e adiciona CSRF (double-submit) + CORS restrito. Roda **após a Foundational e antes das escritas das histórias** (US1 `POST`, US2/US3). Reaproveita/ajusta a auth da AC-01. (research D8/D9/D10)
+
+### Teste (TDD) ⚠️
+
+- [ ] T041 [P] Teste de segurança — `POST` sem `X-XSRF-TOKEN` → **403**; `POST` com token válido → passa; `GET` não exige token; origem não listada barrada, em `api/src/test/java/br/com/maissustentavel/api/SecurityCsrfTest.java` (FR-014/015, contract)
+
+### Implementação — Backend
+
+- [ ] T042 [P] `CorsConfig` — bean `CorsConfigurationSource` com origens via env (`APP_CORS_ORIGINS`, default `http://localhost:4200`), `allowCredentials(true)`, métodos `GET/POST/PUT/OPTIONS`, headers incl. `X-XSRF-TOKEN`, em `api/.../config/CorsConfig.java` (FR-015, D9)
+- [ ] T043 `SecurityConfig` — habilitar `.cors()` e **CSRF** via `CookieCsrfTokenRepository.withHttpOnlyFalse()` + `XorCsrfTokenRequestAttributeHandler` + `CsrfCookieFilter` (força emissão do cookie); autorização inalterada, em `api/.../config/SecurityConfig.java` (FR-014, D8)
+- [ ] T044 Ajustar os testes de auth existentes da AC-01 (`AutenticacaoIntegrationTest`, `SecurityConfigTest`) para incluir `.with(csrf())` nos `POST` e manter o login **verde** com CSRF ativo
+- [ ] T045 Rodar `mvn verify` no Docker → segurança + auth AC-01 **verdes**
+
+### Implementação — Frontend
+
+- [ ] T046 [P] `auth-erro.interceptor.ts` — `HttpInterceptor` que em **401** redireciona para `/login`; registrar em `frontend/src/app/app.config.ts`; garantir `withCredentials` e fluxo XSRF (Angular envia `X-XSRF-TOKEN` a partir do cookie); + spec, em `frontend/src/app/core/` (D10)
+- [ ] T047 Semear o cookie `XSRF-TOKEN` antes do 1º `POST` (ex.: `GET` inicial à API no bootstrap) e validar login + escrita no dev; `npm test` **verde**
+
+**Checkpoint**: escritas autenticadas protegidas (CSRF/CORS) — as histórias com `POST`/`PUT` podem prosseguir.
 
 ---
 
@@ -142,8 +166,9 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ## Dependencies & Execution Order
 
-- **Setup (T001–T002)** → **Foundational (T003–T010)** → **US1 (T011–T021)** → **US2 (T022–T029)** → **US3 (T030–T037)** → **Polish (T038–T040)**.
+- **Setup (T001–T002)** → **Foundational (T003–T010)** → **Segurança/CSRF (T041–T047)** → **US1 (T011–T021)** → **US2 (T022–T029)** → **US3 (T030–T037)** → **Polish (T038–T040)**.
 - Foundational bloqueia todas as histórias (entidade/migração/repositório/DTO/erros).
+- **Phase 2b (T041–T047)** bloqueia os endpoints de **escrita** (US1 `POST`, US2 arquivar, US3 editar/reativar): sem CSRF/CORS as escritas autenticadas ficariam expostas. Numeração 41+ apenas por ter sido inserida após o `tasks.md` inicial; a **ordem de execução é esta**.
 - Dentro de cada história: **testes primeiro (falham)** → serviço → controller → `mvn verify` verde → frontend (spec → componente) → `npm test` verde.
 - US2 e US3 dependem da base de US1 (entidade/serviço/controller já existentes), mas cada uma é um incremento testável e demonstrável por si.
 
@@ -165,7 +190,7 @@ T016  local.model.ts (tipos + rótulos pt-BR)
 
 ## Implementation Strategy
 
-1. **MVP = US1**: Setup → Foundational → US1 → validar (quickstart 1–2, 8). Já é demonstrável (cadastrar + listar).
+1. **MVP = US1**: Setup → Foundational → Segurança/CSRF (2b) → US1 → validar (quickstart 1–2, 8). Já é demonstrável (cadastrar + listar).
 2. **Incrementos**: US2 (arquivar) e US3 (editar/reativar), cada um com seu ciclo TDD e checkpoint.
 3. **Commits**: por tarefa/grupo lógico, em Conventional Commits + gitmoji (`:white_check_mark:` testes, `:sparkles:` feature, `:lock:`/`:lipstick:` quando couber).
 4. **Promoção**: acumular em `develop`; promover `develop→homolog→main` em lote ao fechar a sprint (não por fatia).

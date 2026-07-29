@@ -59,22 +59,35 @@ Autentique-se antes (o cookie de sessão autoriza `/api/locais`). Via UI: `http:
 **Segurança**
 8. Sem sessão, chamar `GET /api/locais` (ex.: aba anônima / curl sem cookie).
    - ✅ **401** (SC-005), sem vazar detalhes internos.
+9. Autenticado, enviar um `POST /api/locais` **sem** o header `X-XSRF-TOKEN`.
+   - ✅ **403** (SC-006 / FR-014). Com o token, a mesma escrita passa.
 
 ## 4. Sondagem rápida por API (opcional, autenticado)
 
-```bash
-# guardar o cookie de sessão do login e reutilizar:
-curl -s -c cookies.txt -X POST http://localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"gestor@maissustentavel.local","senha":"Gestor@123"}'
+Com CSRF ativo, as escritas exigem `X-XSRF-TOKEN`. O fluxo por `curl`: (1) semear o cookie `XSRF-TOKEN`, (2) reusá-lo no header.
 
+```bash
+# 1) primar o cookie XSRF-TOKEN (GET qualquer que dispare a emissão)
+curl -s -c cookies.txt http://localhost:8080/api/auth/csrf > /dev/null
+XSRF=$(grep XSRF-TOKEN cookies.txt | awk '{print $7}')
+
+# 2) login (POST precisa do token e mantém a sessão em cookies.txt)
+curl -s -b cookies.txt -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+  -H "X-XSRF-TOKEN: $XSRF" -H 'Content-Type: application/json' \
+  -d '{"email":"gestor@maissustentavel.local","senha":"Gestor@123"}'
+XSRF=$(grep XSRF-TOKEN cookies.txt | awk '{print $7}')   # atualiza após o login
+
+# 3) criar um local (escrita → exige o token)
 curl -s -b cookies.txt -X POST http://localhost:8080/api/locais \
-  -H 'Content-Type: application/json' \
+  -H "X-XSRF-TOKEN: $XSRF" -H 'Content-Type: application/json' \
   -d '{"nome":"Escola Municipal","tipo":"ESCOLA","endereco":"Av. Central, 200"}'
 
+# 4) leituras (GET não exige token)
 curl -s -b cookies.txt http://localhost:8080/api/locais            # ativos
 curl -s -b cookies.txt 'http://localhost:8080/api/locais?arquivados=true'  # arquivados
 ```
+
+> O endpoint exato de priming (`/api/auth/csrf` ou outro `GET`) é definido na implementação (T043/T047). No navegador, o Angular faz isso automaticamente.
 
 ## Critério de "pronto"
 

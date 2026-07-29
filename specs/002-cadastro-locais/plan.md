@@ -8,7 +8,7 @@
 
 CRUD de **Local** (instituição atendida) pelo Gestor autenticado, com **arquivamento por soft delete** (RN-G-06 / Art. 2.6). O backend ganha um novo módulo em camadas `br.com.maissustentavel.api.local` (domínio → repositório → serviço → web), esquema versionado via **Flyway `V3`** (Hibernate só valida — `ddl-auto=validate`), **RLS** habilitada na tabela `local` como baseline (Art. 7.2) e **validação de entrada** com Bean Validation (Art. 7.6). O frontend Angular ganha a página `/locais` (listagem de ativos com alternância para arquivados + formulário de cadastro/edição em diálogo), consumindo `/api/locais` com sessão por cookie. Tudo sob **TDD** (testes primeiro; backend no Docker com Testcontainers, frontend no runner Vitest).
 
-A feature reaproveita integralmente a fundação da AC-01: autenticação por sessão, `SecurityConfig` (que já exige autenticação em `anyRequest()`), infra de teste com Testcontainers e o design system em `styles.scss`.
+A feature reaproveita a fundação da AC-01 (autenticação por sessão, infra de teste com Testcontainers, design system em `styles.scss`). Como introduz os **primeiros endpoints de escrita autenticados**, também **endurece a autenticação existente** — **sem migrar o mecanismo**: mantém a sessão (cookie `JSESSIONID`, já `HttpOnly`) e adiciona **proteção CSRF** (double-submit `XSRF-TOKEN`/`X-XSRF-TOKEN`) e **CORS restrito** a origens conhecidas. No frontend, um `HttpInterceptor` de 401 redireciona ao login.
 
 ## Technical Context
 
@@ -43,6 +43,7 @@ A feature reaproveita integralmente a fundação da AC-01: autenticação por se
 | 3.3 | Critérios de aceite em Gherkin | ✅ na spec (3 user stories) — fonte dos testes de integração |
 | 5 | TDD obrigatório (teste antes do código) | ✅ tasks de teste antecedem implementação, back e front |
 | 7.3 | Rate limiting em endpoints públicos/auth | ➖ **N/A justificado**: `/api/locais` é interno e exige sessão autenticada; não é superfície pública nem de autenticação. Registrado em `research.md` (D4) |
+| 7.4 / 7.5 | Sessão segura; anti-CSRF; CORS restrito | ✅ sessão em cookie **`HttpOnly`** (default); **CSRF habilitado** (double-submit) para as escritas; **CORS** restrito a origens conhecidas via env (D8/D9) |
 | 7.6 | Validação de entrada na fronteira da API | ✅ Bean Validation (`@NotBlank`/`@NotNull`) + tipo restrito por `enum` e `CHECK` no banco |
 | 8 | pt-BR | ✅ tabela/colunas, código de UI e mensagens em pt-BR |
 
@@ -84,8 +85,11 @@ api/
 │   │       └── dto/
 │   │           ├── LocalRequest.java  # entrada (nome, tipo, endereco) + Bean Validation
 │   │           └── LocalResponse.java # saída (id, nome, tipo, endereco, arquivado, criadoEm)
-│   ├── config/SecurityConfig.java     # SEM alteração: /api/locais cai em anyRequest().authenticated()
-│   └── web/                           # (handler global de erros — ver research D5; novo se ainda não existir)
+│   ├── config/
+│   │   ├── SecurityConfig.java        # ALTERA: habilita CSRF (CookieCsrfTokenRepository) + .cors(); autorização inalterada
+│   │   ├── CorsConfig.java            # NOVO: CorsConfigurationSource (origens via env, credenciais)
+│   │   └── CsrfCookieFilter.java      # NOVO: força a emissão do cookie XSRF-TOKEN (carregamento diferido)
+│   │   # (handler global de erros fica em local/web/ — research D5)
 ├── src/main/resources/db/migration/
 │   └── V3__modelo_local.sql           # NOVO: create table local + CHECK do tipo + índice + RLS
 └── src/test/java/br/com/maissustentavel/api/local/
@@ -103,7 +107,10 @@ frontend/
 │   └── local-form/                    # cadastro/edição em Dialog
 │       ├── local-form.ts|html|scss
 │       └── local-form.spec.ts
+├── src/app/core/
+│   └── auth-erro.interceptor.ts       # NOVO: 401 → redireciona /login (HttpInterceptor)
 ├── src/app/app.routes.ts              # + rota lazy '/locais' (protegida por sessão; 401 → login)
+├── src/app/app.config.ts              # + registra o interceptor; withXsrfConfiguration se necessário
 └── (styles.scss / design tokens já existentes)
 ```
 

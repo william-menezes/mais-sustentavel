@@ -86,6 +86,8 @@ O Gestor corrige os dados de um local (nome, tipo ou endereço) e, quando necess
 - **FR-011**: Todas as operações de Local (cadastrar, editar, listar, arquivar, reativar) DEVEM exigir uma sessão autenticada; requisições não autenticadas DEVEM ser negadas. No MVP, apenas o Gestor acessa.
 - **FR-012**: As mensagens de erro NÃO DEVEM expor detalhes internos do sistema (pilhas de erro, SQL, estrutura interna).
 - **FR-013**: Todos os rótulos, mensagens e textos de interface DEVEM estar em português do Brasil.
+- **FR-014**: As operações que alteram estado (cadastrar, editar, arquivar, reativar) DEVEM ser protegidas contra requisições forjadas a partir de outros sites (CSRF); uma requisição de escrita sem prova de origem legítima do cliente DEVE ser rejeitada.
+- **FR-015**: A API DEVE aceitar requisições apenas de origens conhecidas e autorizadas (CORS restrito), permitindo o envio das credenciais de sessão apenas a essas origens.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -100,6 +102,7 @@ O Gestor corrige os dados de um local (nome, tipo ou endereço) e, quando necess
 - **SC-003**: Ao arquivar um local, ele desaparece da listagem ativa em 100% dos casos e permanece consultável na visão de arquivados.
 - **SC-004**: Nenhum dado é perdido ao arquivar: em 100% dos casos o registro e o histórico/valor social associado permanecem íntegros e recuperáveis.
 - **SC-005**: 100% das requisições não autenticadas a qualquer operação de Local são negadas.
+- **SC-006**: 100% das requisições de escrita (cadastrar/editar/arquivar/reativar) sem prova anti-CSRF válida são rejeitadas, e requisições de origens não autorizadas são bloqueadas.
 
 ## Assumptions
 
@@ -109,6 +112,7 @@ O Gestor corrige os dados de um local (nome, tipo ou endereço) e, quando necess
 - O **nome do local não é único**: instituições homônimas são permitidas.
 - A listagem é **simples** (ativos por padrão + visão de arquivados); busca, ordenação avançada e paginação dedicadas pertencem à VH-01 (fora de escopo).
 - Segurança (Art. 7) será materializada no plano: proteção de dados em repouso no banco (RLS na tabela de Local), validação de entrada no servidor e mensagens genéricas — sem enumerar/expor detalhes.
+- Por introduzir os **primeiros endpoints de escrita autenticados**, esta feature também **endurece a autenticação existente (AC-01)**: mantém a sessão por cookie (que já é `HttpOnly`) e adiciona **proteção anti-CSRF** (token double-submit) e **CORS restrito**. Não há migração de mecanismo (a sessão é preservada); a proteção por papel/escopo (só Gestor, filtro por local) segue como AC-04.
 
 ## Dependencies
 

@@ -32,11 +32,36 @@ Sem `[NEEDS CLARIFICATION]` pendentes (stack fixado pela constituição). Regist
 - **Rationale**: mensagens genéricas e estáveis (FR-012); a validação de campos precisa ser específica o bastante para orientar o Gestor (qual campo faltou) sem revelar internals. Centralizar no advice evita repetição nos controllers.
 - **Alternativas**: tratar erro em cada controller — rejeitado (espalha a regra). Deixar o Spring devolver o erro padrão — rejeitado (pode vazar detalhes e não fica em pt-BR consistente).
 
-## D6 — Segurança de acesso reaproveitando a AC-01
+## D6 — Autorização reaproveitando a AC-01
 
-- **Decisão**: **não alterar** o `SecurityConfig`. Como a allowlist pública cobre apenas `/actuator/health|info` e `/api/auth/login|logout`, qualquer requisição a `/api/locais/**` cai em `anyRequest().authenticated()`. A sessão criada no login (cookie + `HttpSessionSecurityContextRepository`) autoriza as chamadas.
-- **Rationale**: menos superfície de mudança, reuso direto da fundação. No MVP só o Gestor autentica, então "autenticado" ≡ "Gestor" (RN-G-03); autorização por papel/escopo é AC-04.
-- **Alternativas**: adicionar `@PreAuthorize("hasRole('Gestor')")` agora — adiável para AC-04 (ainda não há RBAC na aplicação; adicionaria complexidade fora do escopo).
+- **Decisão**: a **autorização** não muda — a allowlist pública cobre só `/actuator/health|info` e `/api/auth/login|logout`, então `/api/locais/**` cai em `anyRequest().authenticated()`, autorizado pela sessão (cookie `JSESSIONID`, que já é **`HttpOnly`** por padrão do servlet). **Porém**, por esta feature introduzir os primeiros endpoints de **escrita** autenticados, o `SecurityConfig` **passa a habilitar CSRF e CORS** (ver **D8**/**D9**).
+- **Rationale**: reuso direto da fundação; no MVP só o Gestor autentica, então "autenticado" ≡ "Gestor" (RN-G-03). Autorização por papel/escopo é AC-04.
+- **Alternativas**: `@PreAuthorize("hasRole('Gestor')")` agora — adiável para AC-04 (ainda não há RBAC na aplicação).
+
+## D8 — CSRF: manter sessão e endurecer (decisão do usuário)
+
+- **Decisão**: **manter a sessão atual** (sem migrar para JWT) e **habilitar a proteção CSRF** no padrão SPA: `CookieCsrfTokenRepository.withHttpOnlyFalse()` emite um cookie **legível** `XSRF-TOKEN`; o Angular `HttpClient` reenvia esse valor no header `X-XSRF-TOKEN` automaticamente; o servidor compara header × cookie (**double-submit**). Requisições de escrita (`POST`/`PUT`) sem token válido → **403**. Usa-se o handler SPA (`XorCsrfTokenRequestAttributeHandler`) + um filtro que força a emissão do cookie (para o carregamento diferido do Spring Security 6).
+- **Rationale**: `HttpOnly` protege o **token de sessão** contra roubo por XSS, mas **não** protege contra CSRF (o cookie é enviado automaticamente). O double-submit fecha essa lacuna e é seguro mesmo cross-site, pois um site atacante não consegue **ler** o `XSRF-TOKEN` (mesma-origem) para forjar o header. É o par correto do cookie de sessão em SPA. Menos retrabalho que migrar o mecanismo de auth (a sessão já é "token em cookie HttpOnly").
+- **Priming do token**: como o SPA é servido pelo dev-server (não pelo Spring), o cookie `XSRF-TOKEN` precisa ser semeado antes do 1º `POST` (inclusive o login). Faz-se um `GET` inicial à API no `bootstrap` do app (ou um endpoint leve dedicado) que dispara a emissão do cookie.
+- **Impacto nos testes da AC-01**: `AutenticacaoIntegrationTest`/`SecurityConfigTest` passam a exigir `.with(csrf())` nos `POST` do MockMvc; ajuste incluído nas tasks.
+- **Alternativas**: JWT stateless em cookie HttpOnly — rejeitado agora (mais retrabalho, mexe na AC-01, mesma exigência de CSRF); token no header `Authorization` — rejeitado (imune a CSRF, mas exposto a XSS e exige guardar o token no cliente).
+
+## D9 — CORS restrito (Art. 7.5)
+
+- **Decisão**: `CorsConfigurationSource` dedicado, com **origens permitidas via variável de ambiente** (dev: `http://localhost:4200`; prod: domínio do frontend na Vercel), `allowCredentials(true)`, métodos `GET/POST/PUT/OPTIONS` e headers incluindo `X-XSRF-TOKEN` e `Content-Type`. `SecurityConfig` habilita `.cors()`.
+- **Rationale**: com credenciais (cookie) não se pode usar `*`; origens explícitas são exigidas pelo Art. 7.5 e pelo próprio contrato de cookies com credenciais. Em dev o proxy do Angular já mantém same-origin; o CORS cobre o cenário cross-site de produção.
+- **Alternativas**: liberar tudo (`*`) — rejeitado (incompatível com credenciais e viola 7.5); não configurar — rejeitado (quebra o frontend cross-site em produção).
+
+## D10 — Tratamento de 401 no frontend (item U1 do analyze)
+
+- **Decisão**: um `HttpInterceptor` global captura respostas **401** e redireciona para `/login`. Reativo (a chamada acontece e é barrada pelo servidor, que continua sendo a guarda real).
+- **Rationale**: centraliza o tratamento de sessão expirada sem endpoint novo; idiomático no Angular. Guard **preventivo** (`canActivate`) fica para depois e exigirá uma fonte de verdade no servidor (ex.: `GET /api/auth/me` 200/401), já que o token em cookie `HttpOnly` não é legível pelo JS.
+- **Alternativas**: tratar 401 em cada chamada — rejeitado (repetitivo); guard preventivo agora — adiado (depende de `/api/auth/me`, aproxima-se da AC-04).
+
+## D11 — Ressalva de produção cross-site (dívida registrada)
+
+- **Contexto**: em produção o frontend (Vercel) e a API (Render) são **sites diferentes**. Para o cookie de sessão viajar cross-site ele precisa de `SameSite=None; Secure`, e o XSRF do Angular tem particularidades para URLs absolutas (cross-origin). O double-submit (D8) protege o CSRF nesse cenário, mas a configuração de `SameSite`/CORS credenciado precisa ser validada no deploy.
+- **Decisão**: no MVP (dev via proxy same-origin) tudo funciona; a validação do cross-site em produção fica **registrada como item de deploy** (não bloqueia a CA-01). Documentar no `docs/deploy.md` ao publicar o frontend.
 
 ## D7 — Estratégia de teste (TDD)
 
