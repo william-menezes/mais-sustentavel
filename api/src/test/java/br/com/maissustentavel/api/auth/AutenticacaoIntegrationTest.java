@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -59,7 +60,7 @@ class AutenticacaoIntegrationTest {
     @Test
     void loginValidoAutenticaComPapel() throws Exception {
         criarGestor("gestor@teste.com", "segredo123");
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"gestor@teste.com\",\"senha\":\"segredo123\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nome").value("Gestor de Teste"))
@@ -69,7 +70,7 @@ class AutenticacaoIntegrationTest {
     @Test
     void loginSenhaIncorretaRetornaErroGenerico() throws Exception {
         criarGestor("gestor@teste.com", "segredo123");
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"gestor@teste.com\",\"senha\":\"errada\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.erro").value("Credenciais inválidas"));
@@ -77,7 +78,7 @@ class AutenticacaoIntegrationTest {
 
     @Test
     void loginContaInexistenteRetornaMesmaResposta() throws Exception {
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"naoexiste@teste.com\",\"senha\":\"qualquer\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.erro").value("Credenciais inválidas"));
@@ -85,7 +86,7 @@ class AutenticacaoIntegrationTest {
 
     @Test
     void logoutRetorna204() throws Exception {
-        mockMvc.perform(post("/api/auth/logout"))
+        mockMvc.perform(post("/api/auth/logout").with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
@@ -93,10 +94,10 @@ class AutenticacaoIntegrationTest {
     void excessoDeTentativasRetorna429() throws Exception {
         String corpo = "{\"email\":\"x@teste.com\",\"senha\":\"errada\"}";
         for (int i = 0; i < 10; i++) {
-            mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+            mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON).content(corpo))
                     .andExpect(status().isUnauthorized());
         }
-        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+        mockMvc.perform(post("/api/auth/login").with(csrf()).contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().is(429));
     }
 }
