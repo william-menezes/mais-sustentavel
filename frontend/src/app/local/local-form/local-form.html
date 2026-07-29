@@ -1,0 +1,60 @@
+<p-dialog
+  [visible]="visivel()"
+  (visibleChange)="visivel.set($event)"
+  [modal]="true"
+  [header]="titulo()"
+  [style]="{ width: '30rem' }"
+  [draggable]="false"
+>
+  <form class="local-form" (ngSubmit)="salvar()">
+    @if (erro()) {
+      <p-message severity="error" styleClass="form-erro">{{ erro() }}</p-message>
+    }
+
+    <div class="campo">
+      <label for="nome">Nome</label>
+      <input
+        pInputText
+        id="nome"
+        name="nome"
+        placeholder="Ex.: Condomínio Jardim das Acácias"
+        [ngModel]="nome()"
+        (ngModelChange)="nome.set($event)"
+        fluid
+      />
+    </div>
+
+    <div class="campo">
+      <label for="tipo">Tipo</label>
+      <p-select
+        inputId="tipo"
+        [options]="tipos"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Selecione o tipo"
+        [ngModel]="tipo()"
+        (ngModelChange)="tipo.set($event)"
+        name="tipo"
+        fluid
+      />
+    </div>
+
+    <div class="campo">
+      <label for="endereco">Endereço</label>
+      <input
+        pInputText
+        id="endereco"
+        name="endereco"
+        placeholder="Rua, número — bairro"
+        [ngModel]="endereco()"
+        (ngModelChange)="endereco.set($event)"
+        fluid
+      />
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <button type="button" pButton severity="secondary" variant="outlined" (click)="cancelar()">Cancelar</button>
+    <button type="button" pButton (click)="salvar()" [disabled]="salvando()">{{ salvando() ? 'Salvando…' : 'Salvar' }}</button>
+  </ng-template>
+</p-dialog>

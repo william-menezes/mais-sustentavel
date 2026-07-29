@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
@@ -18,7 +19,8 @@ import org.springframework.security.web.context.SecurityContextRepository;
  *
  * <p>Público: health do Actuator e os endpoints de autenticação (`/api/auth/**`).
  * O restante exige autenticação. A identidade vem do {@code UsuarioDetailsService} + BCrypt.
- * CSRF desabilitado nesta etapa (API consumida por SPA; endurecimento/token fica como evolução).
+ * CSRF habilitado no padrão SPA (cookie XSRF-TOKEN + header X-XSRF-TOKEN, double-submit) e
+ * CORS restrito a origens conhecidas — endurecimento introduzido na CA-01 (research D8/D9).
  */
 @Configuration
 @EnableWebSecurity
@@ -27,10 +29,15 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                // CSRF no padrão SPA (Spring Security 7): CookieCsrfTokenRepository (XSRF-TOKEN,
+                // X-XSRF-TOKEN) + handler que resolve o token do header. O CsrfCookieFilter
+                // garante a emissão do cookie mesmo com carregamento diferido (research D8).
+                .csrf(csrf -> csrf.spa())
+                .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/csrf").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
         return http.build();
