@@ -42,7 +42,8 @@ export class Login {
     this.autenticacao.login(this.email(), this.senha()).subscribe({
       next: () => {
         this.carregando.set(false);
-        void this.router.navigateByUrl('/');
+        // Após autenticar, vai para a área administrativa (cadastro de locais).
+        void this.router.navigateByUrl('/locais');
       },
       error: () => {
         this.carregando.set(false);
