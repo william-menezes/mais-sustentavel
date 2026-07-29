@@ -25,8 +25,8 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 **Purpose**: preparar a estrutura do novo módulo (o esqueleto Spring e o app Angular já existem).
 
-- [ ] T001 [P] Criar a estrutura de pacotes do módulo backend em `.../local/` (subpacotes `domain/`, `repository/`, `service/`, `web/`, `web/dto/`)
-- [ ] T002 [P] Criar a pasta do módulo frontend `frontend/src/app/local/` (subpastas `local-list/`, `local-form/`)
+- [x] T001 [P] Criar a estrutura de pacotes do módulo backend em `.../local/` (subpacotes `domain/`, `repository/`, `service/`, `web/`, `web/dto/`)
+- [x] T002 [P] Criar a pasta do módulo frontend `frontend/src/app/local/` (subpastas `local-list/`, `local-form/`)
 
 ---
 
@@ -38,17 +38,17 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ### Teste (TDD — escrever primeiro, ver falhar) ⚠️
 
-- [ ] T003 [P] `LocalRepositoryTest` — persistir um Local; `findByArquivadoFalse` retorna só ativos e `findByArquivadoTrue` só arquivados; `criadoEm` preenchido pelo default, em `api/src/test/java/br/com/maissustentavel/api/local/LocalRepositoryTest.java` (data-model)
+- [x] T003 [P] `LocalRepositoryTest` — persistir um Local; `findByArquivadoFalse` retorna só ativos e `findByArquivadoTrue` só arquivados; `criadoEm` preenchido pelo default, em `api/src/test/java/br/com/maissustentavel/api/local/LocalRepositoryTest.java` (data-model)
 
 ### Implementação
 
-- [ ] T004 [P] Enum `TipoLocal` (CONDOMINIO, ESCOLA, EMPRESA, ESPACO_PUBLICO, OUTRO) em `.../local/domain/TipoLocal.java` (FR-003, data-model D1)
-- [ ] T005 Entidade `Local` (id UUID, `nome`, `endereco`, `tipo` `@Enumerated(STRING)`, `arquivado` default false, `criadoEm` insertable/updatable=false) em `.../local/domain/Local.java` (depende de T004; FR-001/005/006)
-- [ ] T006 [P] `LocalRepository extends JpaRepository<Local, UUID>` com `findByArquivadoFalse()` e `findByArquivadoTrue()` em `.../local/repository/LocalRepository.java` (depende de T005)
-- [ ] T007 [P] Migração `V3__modelo_local.sql` — `create table local` + `CHECK` do tipo + índice `local_arquivado_idx` + `enable row level security`, em `api/src/main/resources/db/migration/V3__modelo_local.sql` (FR-003/006, Art. 7.2; data-model)
-- [ ] T008 [P] DTOs `LocalRequest` (`@NotBlank nome/endereco`, `@NotNull tipo`) e `LocalResponse` (id, nome, tipo, endereco, arquivado, criadoEm) em `.../local/web/dto/` (FR-002/003; contract)
-- [ ] T009 [P] `LocalNaoEncontradoException` + `@RestControllerAdvice` global mapeando validação→400 (`campo→mensagem`) e não encontrado→404, sem vazar detalhes, em `.../local/web/` (FR-010/012, research D5)
-- [ ] T010 Rodar `mvn verify` no Docker e deixar `LocalRepositoryTest` (T003) **verde** (valida mapeamento JPA × esquema Flyway `V3`) (depende de T004–T007)
+- [x] T004 [P] Enum `TipoLocal` (CONDOMINIO, ESCOLA, EMPRESA, ESPACO_PUBLICO, OUTRO) em `.../local/domain/TipoLocal.java` (FR-003, data-model D1)
+- [x] T005 Entidade `Local` (id UUID, `nome`, `endereco`, `tipo` `@Enumerated(STRING)`, `arquivado` default false, `criadoEm` insertable/updatable=false) em `.../local/domain/Local.java` (depende de T004; FR-001/005/006)
+- [x] T006 [P] `LocalRepository extends JpaRepository<Local, UUID>` com `findByArquivadoFalse()` e `findByArquivadoTrue()` em `.../local/repository/LocalRepository.java` (depende de T005)
+- [x] T007 [P] Migração `V3__modelo_local.sql` — `create table local` + `CHECK` do tipo + índice `local_arquivado_idx` + `enable row level security`, em `api/src/main/resources/db/migration/V3__modelo_local.sql` (FR-003/006, Art. 7.2; data-model)
+- [x] T008 [P] DTOs `LocalRequest` (`@NotBlank nome/endereco`, `@NotNull tipo`) e `LocalResponse` (id, nome, tipo, endereco, arquivado, criadoEm) em `.../local/web/dto/` (FR-002/003; contract)
+- [x] T009 [P] `LocalNaoEncontradoException` + `@RestControllerAdvice` global mapeando validação→400 (`campo→mensagem`) e não encontrado→404, sem vazar detalhes, em `.../local/web/` (FR-010/012, research D5)
+- [x] T010 Rodar `mvn verify` no Docker e deixar `LocalRepositoryTest` (T003) **verde** (valida mapeamento JPA × esquema Flyway `V3`) (depende de T004–T007)
 
 **Checkpoint**: base de dados + persistência + contrato de erros prontos.
 
@@ -60,19 +60,19 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ### Teste (TDD) ⚠️
 
-- [ ] T041 [P] Teste de segurança — `POST` sem `X-XSRF-TOKEN` → **403**; `POST` com token válido → passa; `GET` não exige token; origem não listada barrada, em `api/src/test/java/br/com/maissustentavel/api/SecurityCsrfTest.java` (FR-014/015, contract)
+- [x] T041 [P] Teste de segurança — `POST` sem `X-XSRF-TOKEN` → **403**; `POST` com token válido → passa; `GET` não exige token; origem não listada barrada, em `api/src/test/java/br/com/maissustentavel/api/SecurityCsrfTest.java` (FR-014/015, contract)
 
 ### Implementação — Backend
 
-- [ ] T042 [P] `CorsConfig` — bean `CorsConfigurationSource` com origens via env (`APP_CORS_ORIGINS`, default `http://localhost:4200`), `allowCredentials(true)`, métodos `GET/POST/PUT/OPTIONS`, headers incl. `X-XSRF-TOKEN`, em `api/.../config/CorsConfig.java` (FR-015, D9)
-- [ ] T043 `SecurityConfig` — habilitar `.cors()` e **CSRF** via `CookieCsrfTokenRepository.withHttpOnlyFalse()` + `XorCsrfTokenRequestAttributeHandler` + `CsrfCookieFilter` (força emissão do cookie); autorização inalterada, em `api/.../config/SecurityConfig.java` (FR-014, D8)
-- [ ] T044 Ajustar os testes de auth existentes da AC-01 (`AutenticacaoIntegrationTest`, `SecurityConfigTest`) para incluir `.with(csrf())` nos `POST` e manter o login **verde** com CSRF ativo
-- [ ] T045 Rodar `mvn verify` no Docker → segurança + auth AC-01 **verdes**
+- [x] T042 [P] `CorsConfig` — bean `CorsConfigurationSource` com origens via env (`APP_CORS_ORIGINS`, default `http://localhost:4200`), `allowCredentials(true)`, métodos `GET/POST/PUT/OPTIONS`, headers incl. `X-XSRF-TOKEN`, em `api/.../config/CorsConfig.java` (FR-015, D9)
+- [x] T043 `SecurityConfig` — habilitar `.cors()` e **CSRF** via `CookieCsrfTokenRepository.withHttpOnlyFalse()` + `XorCsrfTokenRequestAttributeHandler` + `CsrfCookieFilter` (força emissão do cookie); autorização inalterada, em `api/.../config/SecurityConfig.java` (FR-014, D8)
+- [x] T044 Ajustar os testes de auth existentes da AC-01 (`AutenticacaoIntegrationTest`, `SecurityConfigTest`) para incluir `.with(csrf())` nos `POST` e manter o login **verde** com CSRF ativo
+- [x] T045 Rodar `mvn verify` no Docker → segurança + auth AC-01 **verdes**
 
 ### Implementação — Frontend
 
-- [ ] T046 [P] `auth-erro.interceptor.ts` — `HttpInterceptor` que em **401** redireciona para `/login`; registrar em `frontend/src/app/app.config.ts`; garantir `withCredentials` e fluxo XSRF (Angular envia `X-XSRF-TOKEN` a partir do cookie); + spec, em `frontend/src/app/core/` (D10)
-- [ ] T047 Semear o cookie `XSRF-TOKEN` antes do 1º `POST` (ex.: `GET` inicial à API no bootstrap) e validar login + escrita no dev; `npm test` **verde**
+- [x] T046 [P] `auth-erro.interceptor.ts` — `HttpInterceptor` que em **401** redireciona para `/login`; registrar em `frontend/src/app/app.config.ts`; garantir `withCredentials` e fluxo XSRF (Angular envia `X-XSRF-TOKEN` a partir do cookie); + spec, em `frontend/src/app/core/` (D10)
+- [x] T047 Semear o cookie `XSRF-TOKEN` antes do 1º `POST` (ex.: `GET` inicial à API no bootstrap) e validar login + escrita no dev; `npm test` **verde**
 
 **Checkpoint**: escritas autenticadas protegidas (CSRF/CORS) — as histórias com `POST`/`PUT` podem prosseguir.
 
@@ -86,23 +86,23 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ### Tests (TDD) ⚠️
 
-- [ ] T011 [P] [US1] `LocalServiceTest` — `criar` persiste local ativo; `listarAtivos` retorna só ativos, em `api/src/test/java/br/com/maissustentavel/api/local/LocalServiceTest.java` (FR-001/004)
-- [ ] T012 [P] [US1] `LocalControllerTest` — `POST /api/locais` 201 + `Location`; validação 400 (nome/endereco vazios, tipo fora da lista); `GET /api/locais` lista ativos; **401 sem sessão**, em `api/src/test/java/br/com/maissustentavel/api/local/LocalControllerTest.java` (FR-002/003/011, contract)
+- [x] T011 [P] [US1] `LocalServiceTest` — `criar` persiste local ativo; `listarAtivos` retorna só ativos, em `api/src/test/java/br/com/maissustentavel/api/local/LocalServiceTest.java` (FR-001/004)
+- [x] T012 [P] [US1] `LocalControllerTest` — `POST /api/locais` 201 + `Location`; validação 400 (nome/endereco vazios, tipo fora da lista); `GET /api/locais` lista ativos; **401 sem sessão**, em `api/src/test/java/br/com/maissustentavel/api/local/LocalControllerTest.java` (FR-002/003/011, contract)
 
 ### Implementação — Backend
 
-- [ ] T013 [US1] `LocalService` com `criar(LocalRequest)` e `listarAtivos()` em `.../local/service/LocalService.java` (depende de T005/T006)
-- [ ] T014 [US1] `LocalController` — `POST /api/locais` (201+Location), `GET /api/locais` (ativos por padrão), `GET /api/locais/{id}` (200/404) em `.../local/web/LocalController.java` (depende de T013/T008/T009; contract)
-- [ ] T015 [US1] Rodar `mvn verify` no Docker → testes de US1 (T011/T012) **verdes**
+- [x] T013 [US1] `LocalService` com `criar(LocalRequest)` e `listarAtivos()` em `.../local/service/LocalService.java` (depende de T005/T006)
+- [x] T014 [US1] `LocalController` — `POST /api/locais` (201+Location), `GET /api/locais` (ativos por padrão), `GET /api/locais/{id}` (200/404) em `.../local/web/LocalController.java` (depende de T013/T008/T009; contract)
+- [x] T015 [US1] Rodar `mvn verify` no Docker → testes de US1 (T011/T012) **verdes**
 
 ### Implementação — Frontend (via skill `angular-developer` + MCP PrimeNG)
 
-- [ ] T016 [P] [US1] `local.model.ts` — interface `Local`, tipo `TipoLocal` e mapa de **rótulos pt-BR**, em `frontend/src/app/local/local.model.ts` (FR-013, data-model)
-- [ ] T017 [US1] `local.service.spec.ts` (TDD, `HttpTestingController`) e depois `local.service.ts` — `criar`, `listarAtivos` com `withCredentials` → `/api/locais`, em `frontend/src/app/local/`
-- [ ] T018 [US1] Componente `local-form` (standalone + signals) — diálogo de cadastro com PrimeNG (Dialog, InputText, Select de tipo, Button, Message), validação e emissão de evento ao salvar; + `local-form.spec.ts`, em `frontend/src/app/local/local-form/`
-- [ ] T019 [US1] Componente `local-list` (standalone + signals) — Table de ativos + botão "Novo local" abrindo o `local-form`; + `local-list.spec.ts`, em `frontend/src/app/local/local-list/`
-- [ ] T020 [US1] Rota lazy `'/locais'` em `frontend/src/app/app.routes.ts` (protegida por sessão; 401 → redireciona ao login) e, no sucesso do login, navegar para `/locais`
-- [ ] T021 [US1] Rodar `npm test` (verde) e `ng build` (sem erro) no frontend
+- [x] T016 [P] [US1] `local.model.ts` — interface `Local`, tipo `TipoLocal` e mapa de **rótulos pt-BR**, em `frontend/src/app/local/local.model.ts` (FR-013, data-model)
+- [x] T017 [US1] `local.service.spec.ts` (TDD, `HttpTestingController`) e depois `local.service.ts` — `criar`, `listarAtivos` com `withCredentials` → `/api/locais`, em `frontend/src/app/local/`
+- [x] T018 [US1] Componente `local-form` (standalone + signals) — diálogo de cadastro com PrimeNG (Dialog, InputText, Select de tipo, Button, Message), validação e emissão de evento ao salvar; + `local-form.spec.ts`, em `frontend/src/app/local/local-form/`
+- [x] T019 [US1] Componente `local-list` (standalone + signals) — Table de ativos + botão "Novo local" abrindo o `local-form`; + `local-list.spec.ts`, em `frontend/src/app/local/local-list/`
+- [x] T020 [US1] Rota lazy `'/locais'` em `frontend/src/app/app.routes.ts` (protegida por sessão; 401 → redireciona ao login) e, no sucesso do login, navegar para `/locais`
+- [x] T021 [US1] Rodar `npm test` (verde) e `ng build` (sem erro) no frontend
 
 **Checkpoint**: cadastrar + listar ativos funcionando ponta a ponta — **entregável do MVP**.
 
@@ -116,17 +116,17 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ### Tests (TDD) ⚠️
 
-- [ ] T022 [P] [US2] `LocalServiceTest` (+casos) — `arquivar` marca `arquivado=true`, idempotente; `listarArquivados` retorna só arquivados (FR-005/006/010)
-- [ ] T023 [P] [US2] `LocalControllerTest` (+casos) — `POST /api/locais/{id}/arquivar` 200 (idempotente); `GET /api/locais?arquivados=true`; 404 para id inexistente (contract)
+- [x] T022 [P] [US2] `LocalServiceTest` (+casos) — `arquivar` marca `arquivado=true`, idempotente; `listarArquivados` retorna só arquivados (FR-005/006/010)
+- [x] T023 [P] [US2] `LocalControllerTest` (+casos) — `POST /api/locais/{id}/arquivar` 200 (idempotente); `GET /api/locais?arquivados=true`; 404 para id inexistente (contract)
 
 ### Implementação
 
-- [ ] T024 [US2] `LocalService.arquivar(id)` (idempotente, `LocalNaoEncontradoException` se ausente) e `listarArquivados()` em `.../local/service/LocalService.java`
-- [ ] T025 [US2] `LocalController` — `POST /api/locais/{id}/arquivar` e parâmetro `arquivados` no `GET /api/locais` em `.../local/web/LocalController.java`
-- [ ] T026 [US2] Rodar `mvn verify` no Docker → US2 **verde**
-- [ ] T027 [US2] `local.service` — `arquivar` e `listar(arquivados)` (spec primeiro), em `frontend/src/app/local/local.service.ts`
-- [ ] T028 [US2] `local-list` — alternância ativos/arquivados (SelectButton), ação "Arquivar" com confirmação e Toast de feedback; atualizar `local-list.spec.ts` (via skill angular-developer + MCP PrimeNG)
-- [ ] T029 [US2] Rodar `npm test` (verde) no frontend
+- [x] T024 [US2] `LocalService.arquivar(id)` (idempotente, `LocalNaoEncontradoException` se ausente) e `listarArquivados()` em `.../local/service/LocalService.java`
+- [x] T025 [US2] `LocalController` — `POST /api/locais/{id}/arquivar` e parâmetro `arquivados` no `GET /api/locais` em `.../local/web/LocalController.java`
+- [x] T026 [US2] Rodar `mvn verify` no Docker → US2 **verde**
+- [x] T027 [US2] `local.service` — `arquivar` e `listar(arquivados)` (spec primeiro), em `frontend/src/app/local/local.service.ts`
+- [x] T028 [US2] `local-list` — alternância ativos/arquivados (SelectButton), ação "Arquivar" com confirmação e Toast de feedback; atualizar `local-list.spec.ts` (via skill angular-developer + MCP PrimeNG)
+- [x] T029 [US2] Rodar `npm test` (verde) no frontend
 
 **Checkpoint**: US1 + US2 funcionando de forma independente.
 
@@ -140,17 +140,17 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ### Tests (TDD) ⚠️
 
-- [ ] T030 [P] [US3] `LocalServiceTest` (+casos) — `editar` altera e valida, 404 se ausente; `reativar` marca `arquivado=false`, idempotente (FR-007/009/010)
-- [ ] T031 [P] [US3] `LocalControllerTest` (+casos) — `PUT /api/locais/{id}` 200/400/404; `POST /api/locais/{id}/reativar` 200 (contract)
+- [x] T030 [P] [US3] `LocalServiceTest` (+casos) — `editar` altera e valida, 404 se ausente; `reativar` marca `arquivado=false`, idempotente (FR-007/009/010)
+- [x] T031 [P] [US3] `LocalControllerTest` (+casos) — `PUT /api/locais/{id}` 200/400/404; `POST /api/locais/{id}/reativar` 200 (contract)
 
 ### Implementação
 
-- [ ] T032 [US3] `LocalService.editar(id, LocalRequest)` e `reativar(id)` em `.../local/service/LocalService.java`
-- [ ] T033 [US3] `LocalController` — `PUT /api/locais/{id}` e `POST /api/locais/{id}/reativar` em `.../local/web/LocalController.java`
-- [ ] T034 [US3] Rodar `mvn verify` no Docker → US3 **verde**
-- [ ] T035 [US3] `local.service` — `editar` e `reativar` (spec primeiro), em `frontend/src/app/local/local.service.ts`
-- [ ] T036 [US3] `local-form` em modo edição (pré-preenchido) e `local-list` com ações "Editar" e "Reativar"; atualizar specs (via skill angular-developer + MCP PrimeNG)
-- [ ] T037 [US3] Rodar `npm test` (verde) no frontend
+- [x] T032 [US3] `LocalService.editar(id, LocalRequest)` e `reativar(id)` em `.../local/service/LocalService.java`
+- [x] T033 [US3] `LocalController` — `PUT /api/locais/{id}` e `POST /api/locais/{id}/reativar` em `.../local/web/LocalController.java`
+- [x] T034 [US3] Rodar `mvn verify` no Docker → US3 **verde**
+- [x] T035 [US3] `local.service` — `editar` e `reativar` (spec primeiro), em `frontend/src/app/local/local.service.ts`
+- [x] T036 [US3] `local-form` em modo edição (pré-preenchido) e `local-list` com ações "Editar" e "Reativar"; atualizar specs (via skill angular-developer + MCP PrimeNG)
+- [x] T037 [US3] Rodar `npm test` (verde) no frontend
 
 **Checkpoint**: CRUD + arquivamento completos, cada história testável isoladamente.
 
@@ -158,9 +158,9 @@ description: "Tarefas de implementação — Cadastrar Local (CA-01)"
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [ ] T038 [P] Executar o roteiro do `specs/002-cadastro-locais/quickstart.md` (8 passos) e conferir os cenários da spec
-- [ ] T039 [P] Revisão de segurança: 401 sem sessão (SC-005), RLS presente na `V3`, erros sem vazamento (FR-012), **nenhum DELETE físico** em nenhum caminho (Art. 2.6)
-- [ ] T040 Validação final: `mvn verify` no Docker **e** `npm test` no frontend, ambos verdes (gate de "pronto" — Art. 5.5)
+- [ ] T038 [P] Executar o roteiro do `specs/002-cadastro-locais/quickstart.md` (9 passos) e conferir os cenários da spec — *pendente: validação manual ao vivo (docker compose + ng serve); comportamento coberto por testes automatizados*
+- [x] T039 [P] Revisão de segurança: 401 sem sessão (SC-005), RLS presente na `V3`, erros sem vazamento (FR-012), **nenhum DELETE físico** em nenhum caminho (Art. 2.6)
+- [x] T040 Validação final: `mvn verify` no Docker **e** `npm test` no frontend, ambos verdes (gate de "pronto" — Art. 5.5)
 
 ---
 
