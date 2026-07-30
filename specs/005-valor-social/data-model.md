@@ -28,7 +28,7 @@ Constante do domínio: **TAXA = R$ 1,00 / litro** (RN-G-02). Regra: `valorSocial
 | `litrosReais` | BigDecimal (3 casas) | soma das coletas dos pontos do local, no período |
 | `valorSocial` | BigDecimal (2 casas) | `litrosReais × 1,00` |
 
-Ordenado por `localNome`. Locais sem coletas (no período) não produzem linha.
+Ordenado por `localNome`. **Locais ativos** aparecem sempre (litros/valor `0` quando não têm coletas no período); **locais arquivados** aparecem apenas quando têm coletas (RN-G-06 — arquivado sem coletas não tem valor social a preservar).
 
 ### 3. Série mensal — `ValorSocialMensalResponse[]`
 | Campo | Tipo | Origem/Regra |
@@ -41,7 +41,7 @@ Ordenado cronologicamente (ano, mês). Meses sem coletas não produzem linha.
 
 ## Projeções internas (repository)
 
-- **LocalAgregado** *(interface projection)*: `getLocalId(): UUID`, `getLocalNome(): String`, `getLitros(): BigDecimal`.
+- **LocalAgregado** *(interface projection)*: `getLocalId(): UUID`, `getLocalNome(): String`, `getLitros(): BigDecimal`. Consulta parte de `Local` com `LEFT JOIN` até `Coleta` (filtro de data no `ON`), `HAVING (l.arquivado = false OR sum > 0)`.
 - **MensalAgregado** *(interface projection)*: `getAno(): int`, `getMes(): int`, `getLitros(): BigDecimal`.
 
 O service converte essas projeções em DTOs de resposta (aplicando a TAXA e a escala monetária) e formata `competencia`.

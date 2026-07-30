@@ -16,11 +16,11 @@ Sem fase de setup dedicada: reaproveita módulo/segurança/Testcontainers das fe
 **Objetivo**: base de agregação (repositório + projeções + DTOs + service com conversão/validação) que as três consultas compartilham.
 
 ### Testes (TDD) ⚠️
-- [ ] T001 [P] `ImpactoRepositoryTest` — semeia `Local`/`Ponto`/`Coleta`; verifica: soma total com `coalesce` (0 sem coletas); agregação por local (`join` até `Local`, `group by`, ordenação por nome); série mensal (`year`/`month`, `group by`, ordem cronológica); filtro `de`/`ate` inclusivo (bordas) e nuláveis; **coletas de local/ponto arquivado ainda somam** (RN-G-06). Em `api/src/test/java/.../impacto/ImpactoRepositoryTest.java`. `@Transactional`.
+- [ ] T001 [P] `ImpactoRepositoryTest` — semeia `Local`/`Ponto`/`Coleta`; verifica: soma total com `coalesce` (0 sem coletas); agregação por local (`LEFT JOIN` a partir de `Local`, `group by`, ordenação por nome) — **local ativo sem coletas aparece com 0**; **local arquivado sem coletas não aparece**, mas **arquivado com coletas aparece** (RN-G-06); série mensal (`year`/`month`, `group by`, ordem cronológica); filtro `de`/`ate` inclusivo (bordas) e nuláveis, com o filtro de data no `ON` do join preservando as linhas-zero. Em `api/src/test/java/.../impacto/ImpactoRepositoryTest.java`. `@Transactional`.
 - [ ] T002 [P] `ImpactoServiceTest` — conversão `valorSocial = litros × R$ 1,00` (escala 2, `HALF_UP`); reconciliação (Σ por local == Σ mensal == total) no mesmo período; estado vazio → total 0 e listas vazias; `de > ate` → `PeriodoInvalidoException`; formatação `competencia = "YYYY-MM"`. Em `api/src/test/java/.../impacto/ImpactoServiceTest.java`. `@Transactional`.
 
 ### Implementação — base de agregação
-- [ ] T003 `ImpactoRepository` (`Repository<Coleta, UUID>`) com JPQL parametrizado + predicados nuláveis `(:de is null or c.data >= :de) and (:ate is null or c.data <= :ate)`: `somarLitros(de, ate)`; `agregarPorLocal(de, ate)` → `List<LocalAgregado>`; `agregarMensal(de, ate)` → `List<MensalAgregado>`. Projeções de interface `LocalAgregado`/`MensalAgregado` no mesmo pacote. Em `api/.../impacto/repository/`.
+- [ ] T003 `ImpactoRepository` (`Repository<Coleta, UUID>`) com JPQL parametrizado + predicados nuláveis `(:de is null or c.data >= :de) and (:ate is null or c.data <= :ate)`: `somarLitros(de, ate)` (filtro no `where`); `agregarPorLocal(de, ate)` → `List<LocalAgregado>` — **parte de `Local` com `LEFT JOIN Ponto ... LEFT JOIN Coleta ... on (... filtro de data)`**, `group by l.id, l.nome, l.arquivado`, `having (l.arquivado = false or coalesce(sum(...),0) > 0)`, `order by l.nome`; `agregarMensal(de, ate)` → `List<MensalAgregado>` (filtro no `where`). Projeções de interface `LocalAgregado`/`MensalAgregado` no mesmo pacote. Em `api/.../impacto/repository/`.
 - [ ] T004 [P] DTOs de resposta: `ValorSocialResponse(litrosReais, valorSocial)`, `ValorSocialLocalResponse(localId, localNome, litrosReais, valorSocial)`, `ValorSocialMensalResponse(competencia, litrosReais, valorSocial)` em `api/.../impacto/web/dto/`.
 - [ ] T005 [P] `PeriodoInvalidoException` (RuntimeException) em `api/.../impacto/service/`.
 - [ ] T006 `ImpactoService` — constante `TAXA = BigDecimal.ONE`; `valorSocial(litros)` = `litros.multiply(TAXA).setScale(2, HALF_UP)`; valida período (`de`/`ate` ⇒ `de ≤ ate`, senão `PeriodoInvalidoException`) antes de consultar; métodos `total(de,ate)`, `porLocal(de,ate)`, `mensal(de,ate)` mapeando projeções→DTOs e formatando `competencia`. `@Transactional(readOnly = true)`. Em `api/.../impacto/service/ImpactoService.java`.
@@ -42,8 +42,8 @@ Sem fase de setup dedicada: reaproveita módulo/segurança/Testcontainers das fe
 ## Phase 4: User Story 2 — Valor social por local (P2)
 
 ### Testes (TDD) ⚠️
-- [ ] T011 [P] [US2] `ImpactoControllerTest` (US2) — `GET /api/impacto/valor-social/por-local` → **200** lista por local ordenada por nome; cada linha com seus litros/valor; **Σ valorSocial == total**; local sem coletas ausente; sem coletas → `[]`; filtro `de`/`ate` aplicado.
-- [ ] T012 [P] [US2] `ImpactoRepositoryTest`/`ImpactoServiceTest` (US2) — reforça agregação por local com arquivado somando (RN-G-06).
+- [ ] T011 [P] [US2] `ImpactoControllerTest` (US2) — `GET /api/impacto/valor-social/por-local` → **200** lista por local ordenada por nome; cada linha com seus litros/valor; **local ativo sem coletas aparece com 0**; **Σ valorSocial == total** (linhas-zero somam zero); sem nenhum local → `[]`; filtro `de`/`ate` aplicado (linha-zero preservada no período).
+- [ ] T012 [P] [US2] `ImpactoRepositoryTest`/`ImpactoServiceTest` (US2) — reforça: arquivado **com** coletas soma (RN-G-06) e aparece; arquivado **sem** coletas não aparece; ativo sem coletas aparece com 0.
 
 ### Implementação
 - [ ] T013 [US2] `GET /api/impacto/valor-social/por-local` no `ImpactoController` → `ImpactoService.porLocal`.

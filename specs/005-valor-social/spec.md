@@ -39,8 +39,8 @@ Como Gestor autenticado, quero o valor social **agregado por local**, para compa
 **Acceptance Scenarios**:
 
 1. **Given** coletas em locais distintos, **When** consulto o valor social por local, **Then** cada local traz seus próprios litros reais e valor social (`R$ 1,00 × litros do local`).
-2. **Given** um local sem coletas, **When** consulto a quebra por local, **Then** esse local não gera linha (ou gera linha com zero) e não quebra a consulta.
-3. **Given** coletas em um local arquivado, **When** consulto por local, **Then** o local arquivado ainda aparece com seu valor social preservado.
+2. **Given** um local **ativo** sem coletas no período, **When** consulto a quebra por local, **Then** esse local aparece na lista com litros `0` e valor social `R$ 0,00`.
+3. **Given** coletas em um local arquivado, **When** consulto por local, **Then** o local arquivado ainda aparece com seu valor social preservado (RN-G-06); um local arquivado **sem** coletas não aparece.
 
 ---
 
@@ -77,7 +77,7 @@ Como Gestor autenticado, quero recortar o valor social **por período** — filt
 
 - **FR-001**: O sistema MUST calcular o valor social como `R$ 1,00 × litros reais` das coletas (RN-G-02), usando **sempre** a medição real (`Coleta.litrosReais`) e **nunca** qualquer valor declarado.
 - **FR-002**: O sistema MUST expor o **total geral** de litros reais e o valor social correspondente sobre toda a base de coletas.
-- **FR-003**: O sistema MUST expor o valor social **agregado por local**, trazendo, para cada local, seus litros reais e valor social.
+- **FR-003**: O sistema MUST expor o valor social **agregado por local**, trazendo, para cada local, seus litros reais e valor social. **Locais ativos** aparecem sempre (com `0` quando não têm coletas no período); **locais arquivados** aparecem apenas quando têm coletas (RN-G-06).
 - **FR-004**: O sistema MUST permitir **filtrar por intervalo de datas** (data inicial e final, ambas **opcionais**), considerando apenas coletas cuja `data` caia no intervalo **inclusivo**; extremo omitido ⇒ intervalo aberto naquele lado.
 - **FR-005**: O sistema MUST expor a **série mensal** do valor social, agregando por ano-mês e ordenada cronologicamente.
 - **FR-006**: O sistema MUST tratar a ausência de coletas (ou período vazio) como **total zero e listas vazias**, respondendo com sucesso (não erro).

@@ -34,11 +34,11 @@ Valor social agregado por local, no período. Ordenado por nome do local.
 ### ValorSocialLocalResponse
 ```json
 [
-  { "localId": "uuid", "localNome": "Escola Municipal", "litrosReais": 12.500, "valorSocial": 12.50 },
-  { "localId": "uuid", "localNome": "Condomínio Verde", "litrosReais": 5.500, "valorSocial": 5.50 }
+  { "localId": "uuid", "localNome": "Condomínio Verde", "litrosReais": 0, "valorSocial": 0.00 },
+  { "localId": "uuid", "localNome": "Escola Municipal", "litrosReais": 12.500, "valorSocial": 12.50 }
 ]
 ```
-Locais sem coletas no período não aparecem. Lista vazia `[]` quando não há coletas.
+**Locais ativos** aparecem sempre (com `0` quando não têm coletas no período); **locais arquivados** aparecem apenas quando têm coletas (RN-G-06). Ordenado por `localNome`. Se não houver nenhum local, lista vazia `[]`.
 
 ---
 

@@ -14,13 +14,13 @@ Fase 0. Decisões técnicas para agregar o valor social sobre as `Coleta` (OP-03
 - **Rationale**: dá controle explícito de escala/arredondamento de moeda no código (2 casas), sem depender de casting do banco. Como a taxa é 1,00, o valor social é numericamente os litros arredondados a 2 casas — mas a multiplicação fica explícita para o dia em que a taxa mudar (fora de escopo agora).
 - **Alternativas**: multiplicar no SQL (descartado — controle de escala/moeda menos explícito e mais dependente do dialeto).
 
-## D3 — Agregação por local
+## D3 — Agregação por local (inclui locais ativos com zero)
 
-- **Decisão**: JPQL com `join` até o local e `group by`:
-  `select l.id as localId, l.nome as localNome, coalesce(sum(c.litrosReais),0) as litros from Coleta c join c.ponto p join p.local l [filtro de data] group by l.id, l.nome order by l.nome`.
+- **Decisão** (refinada com o usuário): **partir de `Local`** com `LEFT JOIN` até `Coleta`, aplicando o filtro de data na **condição do join** (não no `where`), para que locais sem coleta no período ainda produzam linha com `0`:
+  `select l.id as localId, l.nome as localNome, coalesce(sum(c.litrosReais),0) as litros from Local l left join Ponto p on p.local = l left join Coleta c on c.ponto = p and (:de is null or c.data >= :de) and (:ate is null or c.data <= :ate) group by l.id, l.nome, l.arquivado having (l.arquivado = false or coalesce(sum(c.litrosReais),0) > 0) order by l.nome`.
   Retorno por **projeção baseada em interface** (`LocalAgregado { getLocalId(); getLocalNome(); getLitros(); }`).
-- **Rationale**: projeção de interface é o caminho idiomático do Spring Data para linhas agregadas; o service converte litros→R$ e monta o DTO. Só entram locais que têm coletas (linha zero não aparece) — coerente com o cenário 2 da US2.
-- **Alternativas**: `constructor expression` para um record (equivalente; interface escolhida por simplicidade e por dispensar FQN no JPQL).
+- **Rationale**: o usuário decidiu que **locais ativos sempre aparecem** (com `0` quando sem coletas no período) — útil para o painel da IS-02 listar todos os locais. O `HAVING` mantém fora apenas os **arquivados sem coletas** (não há valor social a preservar), enquanto **arquivados com coletas** continuam aparecendo (RN-G-06). O filtro de data no `ON` do join preserva as linhas-zero (se fosse no `where`, o local vazio sumiria). Reconciliação (SC-002) intacta: linhas-zero somam zero.
+- **Alternativas**: `INNER JOIN` a partir de `Coleta` (descartado — não lista locais ativos sem coleta, contra a decisão); filtrar por data no `where` (descartado — eliminaria as linhas-zero). Hibernate 6/7 suporta *entity joins* com `on`, então não é preciso mapear coleção `Local.pontos`/`Ponto.coletas`.
 
 ## D4 — Série mensal (ano-mês)
 
