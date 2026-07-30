@@ -19,11 +19,11 @@ Sem `[NEEDS CLARIFICATION]`. Registro das decisões de "como" (inclui as duas su
 - **Rationale**: auditoria de quem registrou, sem acoplar o service ao `SecurityContextHolder` (recebe o e-mail por parâmetro → testável). Campo preparado para o papel **Coletor** (AC-03), coerente com Art. 1.4.
 - **Alternativas**: resolver via `SecurityContextHolder` dentro do service — rejeitado (dificulta teste); deixar sempre null — rejeitado (perde a auditoria barata).
 
-## D4 — Registrar em ponto arquivado: permitido (suposição confirmada)
+## D4 — Registrar exige ponto ativo (decisão do usuário)
 
-- **Decisão**: o registro valida apenas a **existência** do Ponto (inexistente → 404, reusando `PontoNaoEncontradoException`). Não bloqueia por ponto arquivado.
-- **Rationale**: uma coleta física pode ser lançada após o ponto sair de operação; o arquivamento preserva histórico (RN-G-06) e não deve impedir o registro da medição real. Diferente da CA-02 (criar ponto exige local ativo), aqui a medição é um fato passado.
-- **Alternativas**: bloquear em ponto arquivado — rejeitado (impediria lançar coletas legítimas atrasadas).
+- **Decisão**: o registro valida existência **e** disponibilidade do Ponto: inexistente → **404** (`PontoNaoEncontradoException`); **arquivado → 409** (`PontoIndisponivelException`, análoga à `LocalNaoDisponivelException` da CA-02). A **consulta** do histórico (GET) continua permitida em ponto arquivado.
+- **Rationale**: coerência com a CA-02 (não se cria filho num pai arquivado) e com a operação (ponto fora de uso não recebe novas medições). O histórico é preservado (RN-G-06); apenas o registro novo é bloqueado.
+- **Alternativas**: permitir em arquivado — **rejeitado pelo usuário**.
 
 ## D5 — Coleta imutável (append-only)
 

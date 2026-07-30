@@ -26,6 +26,7 @@ O Gestor seleciona um ponto de coleta e registra a medição real: os **litros r
 2. **Given** que estou registrando uma coleta, **When** informo litros iguais ou menores que zero, **Then** o sistema recusa o registro.
 3. **Given** que estou registrando uma coleta, **When** informo uma data ausente ou no futuro, **Then** o sistema recusa o registro.
 4. **Given** um ponto inexistente, **When** tento registrar uma coleta nele, **Then** a operação é bloqueada e nada é registrado.
+5. **Given** um ponto arquivado, **When** tento registrar uma coleta nele, **Then** a operação é bloqueada (um ponto arquivado não recebe novas coletas).
 
 ---
 
@@ -49,7 +50,7 @@ O Gestor consulta as coletas já registradas num ponto (data, litros, e quem reg
 - **Litros inválidos**: valor ≤ 0 (ou não numérico) → registro recusado.
 - **Data inválida**: ausente, malformada ou no futuro → registro recusado.
 - **Ponto inexistente**: registrar coleta num ponto que não existe → bloqueado, nada registrado.
-- **Ponto arquivado**: um ponto arquivado ainda pode ter suas coletas históricas consultadas (o arquivamento preserva o histórico — RN-G-06); o registro de novas coletas em ponto arquivado é tratado como decisão do plano (ver Assumptions).
+- **Ponto arquivado**: **não recebe novas coletas** (registro bloqueado); porém suas coletas históricas continuam **consultáveis** (o arquivamento preserva o histórico — RN-G-06).
 - **Imutabilidade**: uma coleta registrada é um dado de medição — não é editada nem removida no MVP.
 - **Acesso não autenticado**: qualquer operação sem sessão válida é negada.
 
@@ -60,7 +61,7 @@ O Gestor consulta as coletas já registradas num ponto (data, litros, e quem reg
 - **FR-001**: O sistema DEVE permitir registrar uma Coleta associada a um Ponto existente, informando **litros reais** e **data**.
 - **FR-002**: O sistema DEVE exigir **litros reais > 0**; valores ≤ 0 ou não numéricos DEVEM ser recusados.
 - **FR-003**: O sistema DEVE exigir uma **data** válida e **não futura**; data ausente/inválida/futura DEVE ser recusada.
-- **FR-004**: Registrar coleta num **Ponto inexistente** DEVE ser bloqueado, sem persistir nada.
+- **FR-004**: Registrar coleta exige um **Ponto existente e ativo**; Ponto **inexistente** ou **arquivado** DEVE ser bloqueado, sem persistir nada (um ponto arquivado não recebe novas coletas; seu histórico continua consultável).
 - **FR-005**: Uma coleta registrada DEVE ficar associada ao seu Ponto e compor o **total de litros recolhidos** do ponto.
 - **FR-006**: O sistema DEVE registrar (opcionalmente) **quem realizou/registrou** a coleta; no MVP, o usuário autenticado que registrou (auditoria), com o campo preparado para o papel Coletor (AC-03).
 - **FR-007**: O sistema DEVE permitir listar as coletas de um Ponto (data, litros, quem registrou) e apresentar o **total de litros** do ponto (zero quando não houver coletas).
@@ -82,7 +83,7 @@ O Gestor consulta as coletas já registradas num ponto (data, litros, e quem reg
 - **SC-001**: O Gestor registra uma coleta (litros + data) em menos de 1 minuto e a vê refletida no total do ponto.
 - **SC-002**: 100% dos registros com litros ≤ 0 ou data ausente/futura são recusados com mensagem clara.
 - **SC-003**: O total de litros de um ponto é sempre igual à soma exata dos litros das suas coletas.
-- **SC-004**: 100% das tentativas de registrar coleta em ponto inexistente são bloqueadas, sem criar registros órfãos.
+- **SC-004**: 100% das tentativas de registrar coleta em ponto inexistente ou arquivado são bloqueadas, sem criar registros órfãos.
 - **SC-005**: Nenhuma coleta é alterada ou removida após registrada (integridade da medição).
 - **SC-006**: 100% das requisições não autenticadas — e das escritas sem prova anti-CSRF — são negadas.
 
@@ -91,8 +92,8 @@ O Gestor consulta as coletas já registradas num ponto (data, litros, e quem reg
 - Reutiliza a **CA-02** (Ponto) e a fundação de **AC-01** (autenticação por sessão, CSRF double-submit, CORS).
 - **Litros reais** é um número **decimal positivo** (permite frações, ex.: 12,5 L).
 - **Data** é uma data (sem hora), informada pelo Gestor, **não futura** (a coleta pode ser de um dia anterior).
-- **Quem registrou** = o **usuário autenticado** que fez o registro (auditoria). O campo é modelado como opcional e preparado para o papel Coletor (AC-03). *(A confirmar no plano/revisão.)*
-- **Registrar em ponto arquivado**: por padrão **permitido** (uma coleta pode ser lançada após o ponto sair de operação); a consulta do histórico independe do arquivamento. *(A confirmar no plano/revisão.)*
+- **Quem registrou** = o **usuário autenticado** que fez o registro (auditoria; confirmado). O campo é modelado como opcional e preparado para o papel Coletor (AC-03).
+- **Registrar em ponto arquivado**: **bloqueado** (decisão do usuário) — um ponto arquivado não recebe novas coletas; a consulta do histórico continua permitida.
 - Coleta é **append-only** — sem editar/arquivar (não consta na RN-G-06).
 - Segurança (Art. 7) materializada no plano: RLS na tabela de Coleta, validação server-side, mensagens genéricas.
 

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Modelar **Coleta** (medição real de litros) com relação **N:1** a partir do **Ponto** (CA-02). Registro **direto** (sem solicitação/estados): litros reais > 0 + data não futura. A coleta é **imutável** (append-only) e compõe o **total de litros** do ponto — base do valor social (o cálculo em R$/agregação é a IS-01, fora daqui). "Quem registrou" = usuário autenticado (auditoria; campo `coletor` nullable, future-ready para o papel Coletor — AC-03).
+Modelar **Coleta** (medição real de litros) com relação **N:1** a partir do **Ponto** (CA-02). Registro **direto** (sem solicitação/estados) em **ponto ativo** (arquivado → 409): litros reais > 0 + data não futura. A coleta é **imutável** (append-only) e compõe o **total de litros** do ponto — base do valor social (o cálculo em R$/agregação é a IS-01, fora daqui). "Quem registrou" = usuário autenticado (auditoria; campo `coletor` nullable, future-ready para o papel Coletor — AC-03).
 
 Reaproveita a fundação (auth por sessão, CSRF, CORS, Testcontainers, design system). Backend em camadas + migração Flyway **V5** com **RLS**. Frontend: tela de coletas de um ponto (total + lista + registrar), acessível a partir da tela de Pontos.
 
@@ -64,10 +64,12 @@ api/
 │   ├── domain/Coleta.java             # @Entity (id UUID, @ManyToOne Ponto, litrosReais, data, @ManyToOne Usuario coletor nullable, criadoEm @Generated)
 │   ├── repository/ColetaRepository.java  # findByPonto_IdOrderByDataDesc; somaLitrosByPontoId (@Query coalesce)
 │   ├── service/
-│   │   ├── ColetaService.java         # registrar(pontoId, req, coletorEmail): valida ponto + resolve coletor; listar+total
+│   │   ├── ColetaService.java         # registrar(pontoId, req, coletorEmail): valida ponto ATIVO + resolve coletor; listar+total
+│   │   ├── PontoIndisponivelException.java  # ponto arquivado → 409
 │   │   └── (reusa PontoNaoEncontradoException de ponto/service → 404)
 │   └── web/
 │       ├── ColetaController.java      # /api/pontos/{pontoId}/coletas (POST/GET)
+│       ├── ColetaExceptionHandler.java   # PontoIndisponivelException → 409
 │       └── dto/ (ColetaRequest {litrosReais, data}; ColetaResponse; ColetasDoPontoResponse {totalLitros, coletas})
 ├── src/main/resources/db/migration/V5__modelo_coleta.sql     # tabela coleta + FK + CHECK + índice + RLS
 └── src/test/java/.../coleta/          # ColetaRepositoryTest, ColetaServiceTest, ColetaControllerTest

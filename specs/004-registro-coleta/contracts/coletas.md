@@ -9,6 +9,7 @@ Registra uma coleta (medição real) no ponto. "Quem registrou" é o usuário au
 - **201 Created**: `Location: /api/coletas/{id}` (informativo) + corpo `ColetaResponse`.
 - **400 Bad Request**: `litrosReais` ≤ 0/ausente ou `data` ausente/futura/inválida → `{ "erro": "Dados inválidos", "campos": { ... } }`.
 - **404 Not Found**: Ponto inexistente → `{ "erro": "Ponto não encontrado" }`.
+- **409 Conflict**: Ponto arquivado → `{ "erro": "Ponto arquivado não recebe novas coletas" }`.
 - **401 / 403**: sem sessão / sem token CSRF.
 
 ## GET `/api/pontos/{pontoId}/coletas`

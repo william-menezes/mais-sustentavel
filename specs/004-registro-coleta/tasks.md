@@ -21,11 +21,11 @@ Sem fase de Setup (nenhuma dependência/config nova).
 
 ### Testes (TDD) ⚠️
 - [ ] T006 [P] `ColetaServiceTest` — `registrar` valida ponto existente (inexistente → `PontoNaoEncontradoException`); resolve `coletor` por e-mail (associa quando existe, null quando não); persiste litros/data; litros ≤ 0 e data futura são barrados pela validação do DTO (teste de borda no controller). Em `api/src/test/java/.../coleta/ColetaServiceTest.java`.
-- [ ] T007 [P] `ColetaControllerTest` (US1) — `POST /api/pontos/{id}/coletas` → **201** + `ColetaResponse`; **400** litros ≤ 0 / data futura / ausente; **404** ponto inexistente; **401** sem sessão. Em `api/src/test/java/.../coleta/ColetaControllerTest.java`.
+- [ ] T007 [P] `ColetaControllerTest` (US1) — `POST /api/pontos/{id}/coletas` → **201** + `ColetaResponse`; **400** litros ≤ 0 / data futura / ausente; **404** ponto inexistente; **409** ponto arquivado; **401** sem sessão. Em `api/src/test/java/.../coleta/ColetaControllerTest.java`.
 
 ### Implementação
-- [ ] T008 `ColetaService.registrar(pontoId, req, coletorEmail)` — valida Ponto (`PontoRepository`), resolve coletor (`UsuarioRepository.findByEmail`, nullable), salva (`saveAndFlush`), `@Transactional`. Em `api/.../coleta/service/ColetaService.java`.
-- [ ] T009 `ColetaController` — `POST /api/pontos/{pontoId}/coletas`, obtém o e-mail do usuário autenticado (`Authentication`) e repassa ao service. Em `api/.../coleta/web/ColetaController.java`.
+- [ ] T008 `ColetaService.registrar(pontoId, req, coletorEmail)` — valida Ponto existente **e ativo** (`PontoRepository`; inexistente → `PontoNaoEncontradoException` 404, arquivado → `PontoIndisponivelException` 409), resolve coletor (`UsuarioRepository.findByEmail`, nullable), salva (`saveAndFlush`), `@Transactional`. Em `api/.../coleta/service/ColetaService.java`.
+- [ ] T009 `ColetaController` (`POST`, repassa o e-mail do usuário autenticado via `Authentication`) + `ColetaExceptionHandler` (`PontoIndisponivelException` → 409). Em `api/.../coleta/web/`.
 - [ ] T010 `mvn -B clean verify` no Docker → US1 verde.
 
 ## Phase 3: User Story 2 — Consultar coletas e total (P2)
