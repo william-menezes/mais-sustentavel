@@ -40,6 +40,7 @@
         <td><span class="mono">{{ ref(ponto.id) }}</span></td>
         <td>{{ ponto.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
         <td class="acoes">
+          <button pButton type="button" severity="secondary" variant="text" (click)="verColetas(ponto)">Coletas</button>
           <button pButton type="button" severity="secondary" variant="text" (click)="baixarQr(ponto)">Baixar QR</button>
           @if (ponto.arquivado) {
             <button pButton type="button" severity="secondary" variant="text" (click)="reativar(ponto)">Reativar</button>

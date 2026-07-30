@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -25,6 +25,7 @@ export class PontoList implements OnInit {
   private readonly service = inject(PontoService);
   private readonly mensagens = inject(MessageService);
   private readonly rota = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly localId = this.rota.snapshot.paramMap.get('localId') ?? '';
   protected readonly pontos = signal<Ponto[]>([]);
@@ -66,6 +67,10 @@ export class PontoList implements OnInit {
   protected mudarVisao(arquivados: boolean): void {
     this.verArquivados.set(arquivados);
     this.carregar();
+  }
+
+  protected verColetas(ponto: Ponto): void {
+    void this.router.navigate(['/pontos', ponto.id, 'coletas']);
   }
 
   protected novoPonto(): void {

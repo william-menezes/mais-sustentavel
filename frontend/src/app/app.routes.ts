@@ -17,4 +17,8 @@ export const routes: Routes = [
     path: 'locais/:localId/pontos',
     loadComponent: () => import('./ponto/ponto-list/ponto-list').then((m) => m.PontoList),
   },
+  {
+    path: 'pontos/:pontoId/coletas',
+    loadComponent: () => import('./coleta/coleta-list/coleta-list').then((m) => m.ColetaList),
+  },
 ];
