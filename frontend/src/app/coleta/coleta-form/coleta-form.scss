@@ -1,0 +1,21 @@
+.coleta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-top: 0.25rem;
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+  }
+
+  ::ng-deep .form-erro {
+    width: 100%;
+  }
+}
