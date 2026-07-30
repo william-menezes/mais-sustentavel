@@ -1,0 +1,58 @@
+<p-toast />
+
+<section class="pagina-pontos">
+  <header class="cabecalho">
+    <div class="titulo">
+      <a routerLink="/locais" class="voltar">← Locais</a>
+      <h1>Pontos de coleta</h1>
+      <p>Estações físicas deste local, cada uma com seu QR Code único.</p>
+    </div>
+    <button pButton type="button" (click)="novoPonto()" [disabled]="criando()">
+      {{ criando() ? 'Criando…' : 'Novo ponto' }}
+    </button>
+  </header>
+
+  <div class="barra">
+    <p-selectbutton
+      [options]="opcoesVisao"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="verArquivados()"
+      (ngModelChange)="mudarVisao($event)"
+    />
+  </div>
+
+  <p-table [value]="pontos()" dataKey="id" [loading]="carregando()" [tableStyle]="{ 'min-width': '40rem' }">
+    <ng-template #header>
+      <tr>
+        <th scope="col" style="width: 7rem">QR</th>
+        <th scope="col">Referência</th>
+        <th scope="col">Criado em</th>
+        <th scope="col" style="width: 16rem">Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-ponto>
+      <tr>
+        <td>
+          <img [src]="qrUrl(ponto.id)" [alt]="'QR do ponto ' + ref(ponto.id)" class="qr" width="72" height="72" />
+        </td>
+        <td><span class="mono">{{ ref(ponto.id) }}</span></td>
+        <td>{{ ponto.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
+        <td class="acoes">
+          <button pButton type="button" severity="secondary" variant="text" (click)="baixarQr(ponto)">Baixar QR</button>
+          @if (ponto.arquivado) {
+            <button pButton type="button" severity="secondary" variant="text" (click)="reativar(ponto)">Reativar</button>
+          } @else {
+            <button pButton type="button" severity="secondary" variant="text" (click)="arquivar(ponto)">Arquivar</button>
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="4" class="vazio">Nenhum ponto {{ verArquivados() ? 'arquivado' : 'ativo' }} neste local.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>

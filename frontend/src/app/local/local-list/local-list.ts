@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -24,6 +25,7 @@ import { LocalForm } from '../local-form/local-form';
 export class LocalList implements OnInit {
   private readonly service = inject(LocalService);
   private readonly mensagens = inject(MessageService);
+  private readonly router = inject(Router);
 
   protected readonly locais = signal<Local[]>([]);
   protected readonly carregando = signal(false);
@@ -58,6 +60,10 @@ export class LocalList implements OnInit {
   protected mudarVisao(arquivados: boolean): void {
     this.verArquivados.set(arquivados);
     this.carregar();
+  }
+
+  protected verPontos(local: Local): void {
+    void this.router.navigate(['/locais', local.id, 'pontos']);
   }
 
   protected novo(): void {
