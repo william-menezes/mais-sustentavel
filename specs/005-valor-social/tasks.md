@@ -61,7 +61,7 @@ Sem fase de setup dedicada: reaproveita módulo/segurança/Testcontainers das fe
 ## Phase 6: Polish
 
 - [x] T018 [P] Revisão de segurança: 401 sem sessão nos três endpoints; GET sem CSRF (confirmar); mensagens genéricas pt-BR; consultas parametrizadas (sem SQL dinâmico); confirmar que `/api/impacto/**` não foi aberto no `SecurityConfig`.
-- [~] T019 Executar o `quickstart.md` (validação ao vivo por API): total, por local, mensal, filtro, estado vazio, arquivado preserva, 401/400. — *em andamento (testes de integração Testcontainers cobrem todos os cenários; falta o smoke ao vivo).*
+- [x] T019 Executar o `quickstart.md` (validação ao vivo por API): total (R$ 18,00), por local (ativo-vazio com 0,00 + local com coletas), mensal (2026-06=6,00 / 2026-07=12,00 cronológico), filtro por intervalo (julho=12,00; junho=6,00), reconciliação (Σ local = Σ mensal = total), 401 sem sessão, 400 (de>ate e formato inválido). Validado contra a API real (docker compose).
 - [x] T020 `mvn -B clean verify` (Docker) final verde (todas as suites, incluindo as das features anteriores).
 
 ## Dependencies & Execution Order
