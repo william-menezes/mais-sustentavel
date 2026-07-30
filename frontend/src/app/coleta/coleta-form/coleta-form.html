@@ -1,0 +1,50 @@
+<p-dialog
+  [visible]="visivel()"
+  (visibleChange)="visivel.set($event)"
+  [modal]="true"
+  header="Registrar coleta"
+  [style]="{ width: '26rem' }"
+  [draggable]="false"
+>
+  <form class="coleta-form" (ngSubmit)="salvar()">
+    @if (erro()) {
+      <p-message severity="error" styleClass="form-erro">{{ erro() }}</p-message>
+    }
+
+    <div class="campo">
+      <label for="litros">Litros reais</label>
+      <p-inputnumber
+        inputId="litros"
+        name="litros"
+        [ngModel]="litros()"
+        (ngModelChange)="litros.set($event)"
+        mode="decimal"
+        [min]="0"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="3"
+        suffix=" L"
+        placeholder="Ex.: 12,5 L"
+        fluid
+      />
+    </div>
+
+    <div class="campo">
+      <label for="data">Data da coleta</label>
+      <p-datepicker
+        inputId="data"
+        name="data"
+        [ngModel]="data()"
+        (ngModelChange)="data.set($event)"
+        dateFormat="dd/mm/yy"
+        [maxDate]="hoje"
+        [showIcon]="true"
+        fluid
+      />
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <button type="button" pButton severity="secondary" variant="outlined" (click)="cancelar()">Cancelar</button>
+    <button type="button" pButton (click)="salvar()" [disabled]="salvando()">{{ salvando() ? 'Salvando…' : 'Registrar' }}</button>
+  </ng-template>
+</p-dialog>

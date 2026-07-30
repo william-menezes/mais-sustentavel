@@ -39,6 +39,8 @@ services:
       # Em produção, defina SEED_GESTOR_EMAIL/SEED_GESTOR_SENHA no painel da Render (segredos).
       SEED_GESTOR_EMAIL: ${SEED_GESTOR_EMAIL:-gestor@maissustentavel.local}
       SEED_GESTOR_SENHA: ${SEED_GESTOR_SENHA:-Gestor@123}
+      # CA-02: base da URL embutida no QR dos pontos (dev = frontend local).
+      APP_PONTO_BASE_URL: ${APP_PONTO_BASE_URL:-http://localhost:4200}
     ports:
       - "8080:8080"
 

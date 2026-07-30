@@ -31,3 +31,9 @@ management:
     health:
       probes:
         enabled: true
+
+# CA-02: base da URL embutida no QR de cada ponto (o /p/{id} é anexado).
+# Em produção, aponte para o domínio do frontend (Vercel) via APP_PONTO_BASE_URL.
+app:
+  ponto:
+    base-url: ${APP_PONTO_BASE_URL:http://localhost:4200}
