@@ -53,7 +53,7 @@ Sem fase de Setup (nenhuma dependência/config nova).
 ## Phase 5: Polish
 
 - [x] T021 [P] Revisão de segurança: 401 sem sessão, 403 sem CSRF, RLS na `coleta`, imutabilidade (sem PUT/DELETE), mensagens genéricas.
-- [~] T022 Executar o `quickstart.md` (validação ao vivo) e conferir os cenários. — *validação ao vivo por API feita (registrar, total 18 L, 400 litros/data, 409 arquivado, 404); resta o clique manual pela UI.*
+- [x] T022 Executar o `quickstart.md` (validação ao vivo) e conferir os cenários. — *validação ao vivo por API (registrar, total 18 L, 400 litros/data, 409 arquivado, 404) e clique manual pela UI (fluxo Locais → Pontos → Coletas → Registrar coleta) confirmados.*
 - [x] T023 `mvn -B clean verify` (Docker) + `npm test`/`ng build` finais verdes.
 
 ## Dependencies & Execution Order
