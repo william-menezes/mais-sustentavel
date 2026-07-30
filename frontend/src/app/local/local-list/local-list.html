@@ -35,6 +35,7 @@
         <td><p-tag [value]="rotuloTipo(local.tipo)" severity="secondary" /></td>
         <td>{{ local.endereco }}</td>
         <td class="acoes">
+          <button pButton type="button" severity="secondary" variant="text" (click)="verPontos(local)">Pontos</button>
           <button pButton type="button" severity="secondary" variant="text" (click)="editar(local)">Editar</button>
           @if (local.arquivado) {
             <button pButton type="button" severity="secondary" variant="text" (click)="reativar(local)">Reativar</button>
