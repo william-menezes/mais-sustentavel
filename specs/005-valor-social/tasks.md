@@ -16,53 +16,53 @@ Sem fase de setup dedicada: reaproveita módulo/segurança/Testcontainers das fe
 **Objetivo**: base de agregação (repositório + projeções + DTOs + service com conversão/validação) que as três consultas compartilham.
 
 ### Testes (TDD) ⚠️
-- [ ] T001 [P] `ImpactoRepositoryTest` — semeia `Local`/`Ponto`/`Coleta`; verifica: soma total com `coalesce` (0 sem coletas); agregação por local (`LEFT JOIN` a partir de `Local`, `group by`, ordenação por nome) — **local ativo sem coletas aparece com 0**; **local arquivado sem coletas não aparece**, mas **arquivado com coletas aparece** (RN-G-06); série mensal (`year`/`month`, `group by`, ordem cronológica); filtro `de`/`ate` inclusivo (bordas) e nuláveis, com o filtro de data no `ON` do join preservando as linhas-zero. Em `api/src/test/java/.../impacto/ImpactoRepositoryTest.java`. `@Transactional`.
-- [ ] T002 [P] `ImpactoServiceTest` — conversão `valorSocial = litros × R$ 1,00` (escala 2, `HALF_UP`); reconciliação (Σ por local == Σ mensal == total) no mesmo período; estado vazio → total 0 e listas vazias; `de > ate` → `PeriodoInvalidoException`; formatação `competencia = "YYYY-MM"`. Em `api/src/test/java/.../impacto/ImpactoServiceTest.java`. `@Transactional`.
+- [x] T001 [P] `ImpactoRepositoryTest` — semeia `Local`/`Ponto`/`Coleta`; verifica: soma total com `coalesce` (0 sem coletas); agregação por local (`LEFT JOIN` a partir de `Local`, `group by`, ordenação por nome) — **local ativo sem coletas aparece com 0**; **local arquivado sem coletas não aparece**, mas **arquivado com coletas aparece** (RN-G-06); série mensal (`year`/`month`, `group by`, ordem cronológica); filtro `de`/`ate` inclusivo (bordas) e nuláveis, com o filtro de data no `ON` do join preservando as linhas-zero. Em `api/src/test/java/.../impacto/ImpactoRepositoryTest.java`. `@Transactional`.
+- [x] T002 [P] `ImpactoServiceTest` — conversão `valorSocial = litros × R$ 1,00` (escala 2, `HALF_UP`); reconciliação (Σ por local == Σ mensal == total) no mesmo período; estado vazio → total 0 e listas vazias; `de > ate` → `PeriodoInvalidoException`; formatação `competencia = "YYYY-MM"`. Em `api/src/test/java/.../impacto/ImpactoServiceTest.java`. `@Transactional`.
 
 ### Implementação — base de agregação
-- [ ] T003 `ImpactoRepository` (`Repository<Coleta, UUID>`) com JPQL parametrizado + predicados nuláveis `(:de is null or c.data >= :de) and (:ate is null or c.data <= :ate)`: `somarLitros(de, ate)` (filtro no `where`); `agregarPorLocal(de, ate)` → `List<LocalAgregado>` — **parte de `Local` com `LEFT JOIN Ponto ... LEFT JOIN Coleta ... on (... filtro de data)`**, `group by l.id, l.nome, l.arquivado`, `having (l.arquivado = false or coalesce(sum(...),0) > 0)`, `order by l.nome`; `agregarMensal(de, ate)` → `List<MensalAgregado>` (filtro no `where`). Projeções de interface `LocalAgregado`/`MensalAgregado` no mesmo pacote. Em `api/.../impacto/repository/`.
-- [ ] T004 [P] DTOs de resposta: `ValorSocialResponse(litrosReais, valorSocial)`, `ValorSocialLocalResponse(localId, localNome, litrosReais, valorSocial)`, `ValorSocialMensalResponse(competencia, litrosReais, valorSocial)` em `api/.../impacto/web/dto/`.
-- [ ] T005 [P] `PeriodoInvalidoException` (RuntimeException) em `api/.../impacto/service/`.
-- [ ] T006 `ImpactoService` — constante `TAXA = BigDecimal.ONE`; `valorSocial(litros)` = `litros.multiply(TAXA).setScale(2, HALF_UP)`; valida período (`de`/`ate` ⇒ `de ≤ ate`, senão `PeriodoInvalidoException`) antes de consultar; métodos `total(de,ate)`, `porLocal(de,ate)`, `mensal(de,ate)` mapeando projeções→DTOs e formatando `competencia`. `@Transactional(readOnly = true)`. Em `api/.../impacto/service/ImpactoService.java`.
+- [x] T003 `ImpactoRepository` (`Repository<Coleta, UUID>`) com JPQL parametrizado + predicados nuláveis `(:de is null or c.data >= :de) and (:ate is null or c.data <= :ate)`: `somarLitros(de, ate)` (filtro no `where`); `agregarPorLocal(de, ate)` → `List<LocalAgregado>` — **parte de `Local` com `LEFT JOIN Ponto ... LEFT JOIN Coleta ... on (... filtro de data)`**, `group by l.id, l.nome, l.arquivado`, `having (l.arquivado = false or coalesce(sum(...),0) > 0)`, `order by l.nome`; `agregarMensal(de, ate)` → `List<MensalAgregado>` (filtro no `where`). Projeções de interface `LocalAgregado`/`MensalAgregado` no mesmo pacote. Em `api/.../impacto/repository/`.
+- [x] T004 [P] DTOs de resposta: `ValorSocialResponse(litrosReais, valorSocial)`, `ValorSocialLocalResponse(localId, localNome, litrosReais, valorSocial)`, `ValorSocialMensalResponse(competencia, litrosReais, valorSocial)` em `api/.../impacto/web/dto/`.
+- [x] T005 [P] `PeriodoInvalidoException` (RuntimeException) em `api/.../impacto/service/`.
+- [x] T006 `ImpactoService` — constante `TAXA = BigDecimal.ONE`; `valorSocial(litros)` = `litros.multiply(TAXA).setScale(2, HALF_UP)`; valida período (`de`/`ate` ⇒ `de ≤ ate`, senão `PeriodoInvalidoException`) antes de consultar; métodos `total(de,ate)`, `porLocal(de,ate)`, `mensal(de,ate)` mapeando projeções→DTOs e formatando `competencia`. `@Transactional(readOnly = true)`. Em `api/.../impacto/service/ImpactoService.java`.
 
 **Checkpoint**: agregação + conversão + validação prontas e verdes (repository + service). As três histórias abaixo só expõem isso via HTTP.
 
 ## Phase 3: User Story 1 — Valor social total (P1) 🎯 MVP
 
 ### Testes (TDD) ⚠️
-- [ ] T007 [P] [US1] `ImpactoControllerTest` (US1) — `GET /api/impacto/valor-social` → **200** `{litrosReais, valorSocial}` (valor = litros × 1,00); sem coletas → zeros; **401** sem sessão; `de > ate` → **400** `{"erro":"Período inválido"}`; `de=abc` → **400** `{"erro":"Dados inválidos"}`. Em `api/src/test/java/.../impacto/ImpactoControllerTest.java`. `@Transactional`.
+- [x] T007 [P] [US1] `ImpactoControllerTest` (US1) — `GET /api/impacto/valor-social` → **200** `{litrosReais, valorSocial}` (valor = litros × 1,00); sem coletas → zeros; **401** sem sessão; `de > ate` → **400** `{"erro":"Período inválido"}`; `de=abc` → **400** `{"erro":"Dados inválidos"}`. Em `api/src/test/java/.../impacto/ImpactoControllerTest.java`. `@Transactional`.
 
 ### Implementação
-- [ ] T008 [US1] `ImpactoController` com `GET /api/impacto/valor-social` (params `@RequestParam(required=false) LocalDate de, ate`) → `ImpactoService.total`. Em `api/.../impacto/web/ImpactoController.java`.
-- [ ] T009 [US1] `ImpactoExceptionHandler` (`@RestControllerAdvice`) — `PeriodoInvalidoException` → 400 "Período inválido"; `MethodArgumentTypeMismatchException` → 400 "Dados inválidos" (reusa `ErroResponse`). Em `api/.../impacto/web/ImpactoExceptionHandler.java`.
-- [ ] T010 [US1] `mvn -B clean verify` no Docker → US1 verde.
+- [x] T008 [US1] `ImpactoController` com `GET /api/impacto/valor-social` (params `@RequestParam(required=false) LocalDate de, ate`) → `ImpactoService.total`. Em `api/.../impacto/web/ImpactoController.java`.
+- [x] T009 [US1] `ImpactoExceptionHandler` (`@RestControllerAdvice`) — `PeriodoInvalidoException` → 400 "Período inválido"; `MethodArgumentTypeMismatchException` → 400 "Dados inválidos" (reusa `ErroResponse`). Em `api/.../impacto/web/ImpactoExceptionHandler.java`.
+- [x] T010 [US1] `mvn -B clean verify` no Docker → US1 verde.
 
 **Checkpoint**: total geral consultável e seguro. MVP demonstrável.
 
 ## Phase 4: User Story 2 — Valor social por local (P2)
 
 ### Testes (TDD) ⚠️
-- [ ] T011 [P] [US2] `ImpactoControllerTest` (US2) — `GET /api/impacto/valor-social/por-local` → **200** lista por local ordenada por nome; cada linha com seus litros/valor; **local ativo sem coletas aparece com 0**; **Σ valorSocial == total** (linhas-zero somam zero); sem nenhum local → `[]`; filtro `de`/`ate` aplicado (linha-zero preservada no período).
-- [ ] T012 [P] [US2] `ImpactoRepositoryTest`/`ImpactoServiceTest` (US2) — reforça: arquivado **com** coletas soma (RN-G-06) e aparece; arquivado **sem** coletas não aparece; ativo sem coletas aparece com 0.
+- [x] T011 [P] [US2] `ImpactoControllerTest` (US2) — `GET /api/impacto/valor-social/por-local` → **200** lista por local ordenada por nome; cada linha com seus litros/valor; **local ativo sem coletas aparece com 0**; **Σ valorSocial == total** (linhas-zero somam zero); sem nenhum local → `[]`; filtro `de`/`ate` aplicado (linha-zero preservada no período).
+- [x] T012 [P] [US2] `ImpactoRepositoryTest`/`ImpactoServiceTest` (US2) — reforça: arquivado **com** coletas soma (RN-G-06) e aparece; arquivado **sem** coletas não aparece; ativo sem coletas aparece com 0.
 
 ### Implementação
-- [ ] T013 [US2] `GET /api/impacto/valor-social/por-local` no `ImpactoController` → `ImpactoService.porLocal`.
-- [ ] T014 [US2] `mvn -B clean verify` no Docker → US1+US2 verdes.
+- [x] T013 [US2] `GET /api/impacto/valor-social/por-local` no `ImpactoController` → `ImpactoService.porLocal`.
+- [x] T014 [US2] `mvn -B clean verify` no Docker → US1+US2 verdes.
 
 ## Phase 5: User Story 3 — Valor social por período (P3)
 
 ### Testes (TDD) ⚠️
-- [ ] T015 [P] [US3] `ImpactoControllerTest` (US3) — filtro por intervalo inclusivo nos três endpoints (bordas `de`/`ate`; só extremo inicial; só final); `GET .../mensal` → **200** série `{competencia:"YYYY-MM",...}` cronológica; **Σ valorSocial mensal == total**; intervalo sem coletas → total 0 / `[]`.
+- [x] T015 [P] [US3] `ImpactoControllerTest` (US3) — filtro por intervalo inclusivo nos três endpoints (bordas `de`/`ate`; só extremo inicial; só final); `GET .../mensal` → **200** série `{competencia:"YYYY-MM",...}` cronológica; **Σ valorSocial mensal == total**; intervalo sem coletas → total 0 / `[]`.
 
 ### Implementação
-- [ ] T016 [US3] `GET /api/impacto/valor-social/mensal` no `ImpactoController` → `ImpactoService.mensal` (o filtro `de`/`ate` já é transversal aos três endpoints via service/repository).
-- [ ] T017 [US3] `mvn -B clean verify` no Docker → backend completo verde.
+- [x] T016 [US3] `GET /api/impacto/valor-social/mensal` no `ImpactoController` → `ImpactoService.mensal` (o filtro `de`/`ate` já é transversal aos três endpoints via service/repository).
+- [x] T017 [US3] `mvn -B clean verify` no Docker → backend completo verde.
 
 ## Phase 6: Polish
 
-- [ ] T018 [P] Revisão de segurança: 401 sem sessão nos três endpoints; GET sem CSRF (confirmar); mensagens genéricas pt-BR; consultas parametrizadas (sem SQL dinâmico); confirmar que `/api/impacto/**` não foi aberto no `SecurityConfig`.
-- [ ] T019 Executar o `quickstart.md` (validação ao vivo por API): total, por local, mensal, filtro, estado vazio, arquivado preserva, 401/400.
-- [ ] T020 `mvn -B clean verify` (Docker) final verde (todas as suites, incluindo as das features anteriores).
+- [x] T018 [P] Revisão de segurança: 401 sem sessão nos três endpoints; GET sem CSRF (confirmar); mensagens genéricas pt-BR; consultas parametrizadas (sem SQL dinâmico); confirmar que `/api/impacto/**` não foi aberto no `SecurityConfig`.
+- [~] T019 Executar o `quickstart.md` (validação ao vivo por API): total, por local, mensal, filtro, estado vazio, arquivado preserva, 401/400. — *em andamento (testes de integração Testcontainers cobrem todos os cenários; falta o smoke ao vivo).*
+- [x] T020 `mvn -B clean verify` (Docker) final verde (todas as suites, incluindo as das features anteriores).
 
 ## Dependencies & Execution Order
 
