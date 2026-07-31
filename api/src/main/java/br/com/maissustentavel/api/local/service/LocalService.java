@@ -72,8 +72,27 @@ public class LocalService {
 
     private static void aplicar(Local local, LocalRequest requisicao) {
         local.setNome(requisicao.nome().trim());
-        local.setEndereco(requisicao.endereco().trim());
         local.setTipo(requisicao.tipo());
+        local.setCep(requisicao.cep().trim());
+        local.setRua(requisicao.rua().trim());
+        local.setNumero(requisicao.numero().trim());
+        local.setComplemento(opcional(requisicao.complemento()));
+        local.setBairro(requisicao.bairro().trim());
+        local.setCidade(requisicao.cidade().trim());
+        local.setUf(requisicao.uf());
+    }
+
+    /**
+     * Normaliza um componente opcional: ausente, vazio ou só com espaços viram {@code null}.
+     * Sem isto, um complemento em branco seria gravado como "" e a resposta traria string vazia
+     * onde o contrato promete nulo.
+     */
+    private static String opcional(String valor) {
+        if (valor == null) {
+            return null;
+        }
+        String limpo = valor.trim();
+        return limpo.isEmpty() ? null : limpo;
     }
 
     private static LocalResponse toResponse(Local local) {
@@ -81,7 +100,13 @@ public class LocalService {
                 local.getId(),
                 local.getNome(),
                 local.getTipo(),
-                local.getEndereco(),
+                local.getCep(),
+                local.getRua(),
+                local.getNumero(),
+                local.getComplemento(),
+                local.getBairro(),
+                local.getCidade(),
+                local.getUf(),
                 local.isArquivado(),
                 local.getCriadoEm());
     }

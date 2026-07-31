@@ -1,6 +1,7 @@
 package br.com.maissustentavel.api;
 
 import br.com.maissustentavel.api.auth.service.LimitadorTentativasLogin;
+import br.com.maissustentavel.api.local.LocalFixture;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,7 +64,7 @@ class SecurityCsrfTest {
         mockMvc.perform(post("/api/locais").with(user("gestor"))
                         .cookie(new Cookie("XSRF-TOKEN", "token-qualquer"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"X\",\"tipo\":\"OUTRO\",\"endereco\":\"Y\"}"))
+                        .content(LocalFixture.json("X", "OUTRO")))
                 .andExpect(status().isForbidden());
     }
 

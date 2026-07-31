@@ -11,6 +11,7 @@ import br.com.maissustentavel.api.coleta.service.PontoIndisponivelException;
 import br.com.maissustentavel.api.coleta.web.dto.ColetaRequest;
 import br.com.maissustentavel.api.coleta.web.dto.ColetaResponse;
 import br.com.maissustentavel.api.coleta.web.dto.ColetasDoPontoResponse;
+import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
@@ -70,7 +71,7 @@ class ColetaServiceTest {
     private Ponto ponto(boolean arquivado) {
         Local l = new Local();
         l.setNome("Local");
-        l.setEndereco("Rua X, 1");
+        LocalFixture.comEnderecoValido(l);
         l.setTipo(TipoLocal.ESCOLA);
         localRepository.saveAndFlush(l);
         Ponto p = new Ponto();

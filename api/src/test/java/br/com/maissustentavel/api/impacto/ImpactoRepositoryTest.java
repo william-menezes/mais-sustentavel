@@ -6,6 +6,7 @@ import br.com.maissustentavel.api.coleta.repository.ColetaRepository;
 import br.com.maissustentavel.api.impacto.repository.ImpactoRepository;
 import br.com.maissustentavel.api.impacto.repository.LocalAgregado;
 import br.com.maissustentavel.api.impacto.repository.MensalAgregado;
+import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
@@ -56,7 +57,7 @@ class ImpactoRepositoryTest {
     private Local local(String nome, boolean arquivado) {
         Local l = new Local();
         l.setNome(nome);
-        l.setEndereco("Rua X, 1");
+        LocalFixture.comEnderecoValido(l);
         l.setTipo(TipoLocal.ESCOLA);
         l.setArquivado(arquivado);
         return localRepository.saveAndFlush(l);

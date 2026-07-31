@@ -3,6 +3,7 @@ package br.com.maissustentavel.api.coleta;
 import br.com.maissustentavel.api.TestcontainersConfiguration;
 import br.com.maissustentavel.api.coleta.domain.Coleta;
 import br.com.maissustentavel.api.coleta.repository.ColetaRepository;
+import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
@@ -48,7 +49,7 @@ class ColetaRepositoryTest {
     private Ponto ponto() {
         Local l = new Local();
         l.setNome("Local");
-        l.setEndereco("Rua X, 1");
+        LocalFixture.comEnderecoValido(l);
         l.setTipo(TipoLocal.ESCOLA);
         localRepository.saveAndFlush(l);
         Ponto p = new Ponto();
