@@ -1,0 +1,22 @@
+.painel-shell {
+  display: flex;
+  min-height: 100dvh;
+  background: var(--color-surface);
+}
+
+.painel-conteudo {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-xxl);
+}
+
+.painel-topo h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--color-ink);
+}
+
+.painel-topo p {
+  margin-top: var(--space-xs);
+  color: var(--color-slate);
+}

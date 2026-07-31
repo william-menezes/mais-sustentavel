@@ -10,6 +10,10 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/login/login').then((m) => m.Login),
   },
   {
+    path: 'painel',
+    loadComponent: () => import('./painel/painel').then((m) => m.Painel),
+  },
+  {
     path: 'locais',
     loadComponent: () => import('./local/local-list/local-list').then((m) => m.LocalList),
   },
