@@ -362,6 +362,64 @@ The system runs predominantly flat. Elevation is reserved for sticky panels, dro
 - Feature tile illustrations are SVG-based; remain crisp at all breakpoints.
 - Avatar imagery in testimonials/rankings uses 1:1 aspect ratio with `{rounded.full}` masking.
 
+## Padrões de telas administrativas (pt-BR)
+
+> Estabelecidos na feature `006-endereco-estruturado-locais`, na tela de Locais. **Pontos de coleta
+> e Coletas devem reaproveitá-los** em vez de reinventar — é o que mantém as telas coerentes.
+
+### 1. Filtro por coluna com menu de funil
+
+Toda tabela de dados usa `p-table` com `filterDisplay="menu"` e um `p-column-filter` por coluna,
+com o operador de comparação visível ao usuário:
+
+| Tipo de dado | Filtro |
+|---|---|
+| Texto (nome) | `type="text"` — contém, começa com, igual |
+| Numérico (litros) | `type="numeric"` — maior que, menor que, entre |
+| Lista fechada (tipo, situação) | `matchMode="equals"` com `p-select` no template `#filter` |
+
+Cuidado ao consultar a documentação: os demos do PrimeNG chamados `filterbasic` e `filter-advanced`
+usam `[showMenu]="false"`, que é o estilo **de linha** — o oposto do adotado aqui. A escolha do menu
+é decisão de produto.
+
+Quando um filtro não retorna nada, a mensagem é **distinta** da de lista sem cadastro, e traz a
+saída ("Limpar filtros"). Confundir as duas faz o Gestor achar que perdeu dados.
+
+### 2. Painel de cadastro sobreposto
+
+Cadastro e edição usam `app-form-drawer` (`widget/components/form-drawer`), nunca uma janela modal
+centralizada nem navegação para outra tela:
+
+- posição **direita** a partir de 768 px, **de baixo para cima** abaixo disso — o breakpoint é o
+  mesmo da tabela acima, via `ViewportService`
+- **cabeçalho e rodapé fixos**: trilha de navegação e título no topo, ações embaixo, só o corpo rola
+- o botão salvar fica **indisponível** enquanto houver campo obrigatório em branco; sem mensagem
+  por campo e sem lista de pendências no rodapé
+- o painel não conhece domínio: o formulário entra por `<ng-content>` e o pai decide quando salvar
+  está disponível
+
+### 3. Campo relacional com criação sobreposta
+
+Campo que aponta para outro registro (o Local de um Ponto, o Ponto de uma Coleta) usa autocomplete
+buscando no backend. Quando a busca não casa com nada, o estado vazio oferece **"+ adicionar"**, que
+abre um **segundo painel sobre o primeiro**, sem fechá-lo. Ao salvar, o registro criado volta já
+selecionado no campo e o painel de cima fecha.
+
+> Este terceiro padrão foi definido junto com os outros dois, mas **ainda não foi exercitado**:
+> Local não tem campo relacional. A primeira aplicação real — e a validação de painel sobre painel —
+> acontece na tela de Pontos de coleta.
+
+### Orçamento de bundle
+
+O aviso de bundle inicial está em **560 kB** (erro em 1 MB), acima dos 500 kB originais. A elevação
+foi deliberada: cada tela nova traz módulos do PrimeNG cuja infraestrutura compartilhada é içada
+para o entry comum, e o `main` cresce sem que código de tela seja carregado antecipadamente. Na
+feature 006 isso foi conferido por inspeção do bundle — drawer, máscara, filtros e consulta de CEP
+ficaram todos no chunk lazy da página.
+
+O número que importa para o usuário é a **transferência**: ~122 kB comprimidos no carregamento
+inicial. O erro em 1 MB segue como guarda real contra carregar um domínio inteiro por engano.
+
 ## Iteration Guide
 
 1. Focus on ONE component at a time. The system has high internal consistency.
