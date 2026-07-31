@@ -369,8 +369,8 @@ The system runs predominantly flat. Elevation is reserved for sticky panels, dro
 
 ### 1. Filtro por coluna com menu de funil
 
-Toda tabela de dados usa `p-table` com `filterDisplay="menu"` e um `p-column-filter` por coluna,
-com o operador de comparação visível ao usuário:
+Toda tabela de dados usa `p-table` com um `p-column-filter` por coluna em **`display="menu"`**, com o
+operador de comparação visível ao usuário:
 
 | Tipo de dado | Filtro |
 |---|---|
@@ -378,9 +378,26 @@ com o operador de comparação visível ao usuário:
 | Numérico (litros) | `type="numeric"` — maior que, menor que, entre |
 | Lista fechada (tipo, situação) | `matchMode="equals"` com `p-select` no template `#filter` |
 
-Cuidado ao consultar a documentação: os demos do PrimeNG chamados `filterbasic` e `filter-advanced`
-usam `[showMenu]="false"`, que é o estilo **de linha** — o oposto do adotado aqui. A escolha do menu
-é decisão de produto.
+**`filterDisplay` na `p-table` não existe no PrimeNG 22.** A primeira versão deste documento dizia que
+era ele quem punha o filtro em menu. Conferido no pacote instalado: a string não aparece no bundle nem
+nos tipos da tabela — é atributo **inerte**. Quem decide menu ou linha é o `display` de cada
+`p-column-filter`. As telas escritas antes desta descoberta ainda carregam o atributo; ele não faz mal,
+mas **não o trate como o mecanismo** — remover o `display="menu"` confiando nele quebra o filtro.
+
+Cuidado também ao consultar a documentação: os demos do PrimeNG chamados `filterbasic` e
+`filter-advanced` usam `[showMenu]="false"`, que é o estilo **de linha** — o oposto do adotado aqui. A
+escolha do menu é decisão de produto.
+
+**O filtro inicial é declarado pelo binding `[filters]`, nunca por `tabela.filter(...)`.** Em modo de
+menu o estado de cada campo é um **array de condições**; a API imperativa grava a forma de linha (objeto
+único) e corrompe o painel do funil — a tabela fica filtrada enquanto o funil diz que não há filtro. Foi
+um defeito real, corrigido na 006.
+
+**E cuidado ao testar isso.** A tabela **não copia** o mapa de filtros: guarda a mesma referência e o
+`initFieldFilterConstraint` escreve dentro dela, preenchendo as colunas que faltaram. Logo, um teste que
+leia `tabela.filters` de um componente **renderizado** passa mesmo que a coluna não tenha sido
+declarada — asserção vacuosa. Para verificar o que foi de fato declarado, leia o mapa de uma instância
+**não renderizada**.
 
 Quando um filtro não retorna nada, a mensagem é **distinta** da de lista sem cadastro, e traz a
 saída ("Limpar filtros"). Confundir as duas faz o Gestor achar que perdeu dados.
@@ -405,9 +422,9 @@ buscando no backend. Quando a busca não casa com nada, o estado vazio oferece *
 abre um **segundo painel sobre o primeiro**, sem fechá-lo. Ao salvar, o registro criado volta já
 selecionado no campo e o painel de cima fecha.
 
-**Painel sobre painel já está exercitado**, ainda que sem autocomplete: "Novo ponto" na ficha do
-Local abre o cadastro de ponto empilhado, e a ficha permanece aberta atrás. O que aprendemos ali vale
-para o padrão inteiro:
+**O padrão está exercitado por inteiro desde a 007**, autocomplete incluído: o cadastro de estação tem
+o campo de Local por busca, e o estado sem resultado abre o formulário de Local empilhado, devolvendo o
+local criado já escolhido. O que aprendemos vale para toda aplicação futura do padrão:
 
 - **O empilhamento não precisa de configuração.** O `ZIndexUtils` do PrimeNG mantém uma pilha e
   incrementa a camada a cada painel modal (1101, depois 1102), então o de cima aparece acima sem
@@ -426,9 +443,38 @@ para o padrão inteiro:
   dado exibido nela muda e ficaria velho atrás do formulário. Criar um filho não muda o pai: o
   usuário volta para a mesma ficha, agora com o item novo na lista.
 
-> O que continua **não exercitado** é a parte do **autocomplete**: nenhuma tela ainda tem campo que
-> aponta para outro registro. Local não tem, e o cadastro de Ponto não tem campo nenhum. A primeira
-> aplicação de "buscar, não achar, + adicionar" será a tela de Coletas.
+Do autocomplete, o que a 007 estabeleceu:
+
+- **Carregue o acervo uma vez e filtre no cliente**, não uma consulta por tecla. Dezenas de registros
+  cabem na memória, e a busca responde sem latência. A carga acontece no **primeiro uso**, não na
+  criação do componente: painel fechado ainda instancia o conteúdo projetado, então carregar na
+  construção faria toda tela que hospeda o cadastro pedir a lista só por existir.
+- **Ignore acentos e caixa na comparação.** "Uberlandia" tem de encontrar "Uberlândia" — quem digita
+  rápido não acentua. Normalize os dois lados com `normalize('NFD')` removendo diacríticos.
+- **Não ofereça registros arquivados.** Oferecê-los produz uma recusa do servidor logo depois, que a
+  interface podia ter evitado em vez de traduzir.
+- **"+ adicionar" é botão abaixo do campo, não item da lista de sugestões.** Controle acionável dentro
+  de um `role="option"` quebra a semântica do listbox, e a lista fecha no blur exatamente quando se vai
+  clicar.
+- **Guarde o texto digitado num signal separado do registro escolhido.** Sem `forceSelection`, o
+  `p-autocomplete` grava o texto cru no modelo — sem essa separação uma string vaza para onde se espera
+  um registro, e o formulário acredita ter uma escolha que não houve.
+- **Repasse o `nivel`, não só o calcule.** Foi um defeito real: o nível do formulário empilhado era
+  computado certo e **não chegava** ao painel, que usava o padrão 0 — os dois saíam com a mesma largura
+  e o de baixo desaparecia. O teste que olhava o `computed` passava; o que segue o valor até o painel é
+  que pega.
+
+### 4. Alternância de visualização com uma única fonte de estado
+
+Telas que oferecem cartões **e** tabela mantêm **uma** `p-table` como dona do dado, do filtro e da
+ordenação nos dois modos. No modo cartões, o corpo da tabela renderiza uma linha com uma célula que
+contém a grade, alimentada pelo `filteredValue` da própria tabela.
+
+Duas árvores independentes exigiriam sincronizar o estado de filtro à mão, e estado duplicado diverge —
+o requisito de "o filtro sobrevive à alternância" seria uma promessa em vez de uma consequência.
+
+Os controles de filtro ficam visíveis nos **dois** modos. Esconder o filtro em um deles o tornaria menos
+capaz sem motivo.
 
 ### Orçamento de bundle
 

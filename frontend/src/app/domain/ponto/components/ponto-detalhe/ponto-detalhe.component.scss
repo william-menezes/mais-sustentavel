@@ -1,0 +1,215 @@
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.secao {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+
+/* QR e identificação lado a lado; abaixo de 380 px o cartão empilha para não apertar o endereço. */
+.qr {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.qr .imagem {
+  flex: none;
+  width: 148px;
+  height: 148px;
+  border-radius: 8px;
+  background: var(--color-canvas);
+}
+
+.qr .identificacao {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  /* Sem isto o endereço longo empurraria o cartão e provocaria rolagem horizontal no painel. */
+  min-width: 0;
+}
+
+/* Monoespaçada porque a referência curta é um identificador: alinha e evita ler 0 como O. */
+.qr .ref {
+  font-family: ui-monospace, 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.endereco {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-slate);
+  /* O endereço completo aparece quando a cópia falha: quebra em qualquer ponto para caber inteiro. */
+  overflow-wrap: anywhere;
+  /* Seleção manual é a saída quando a área de transferência não está disponível. */
+  user-select: all;
+}
+
+.acoes-qr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xxs);
+}
+
+@media (max-width: 380px) {
+  .qr {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Três indicadores lado a lado; em tela estreita cabem dois por linha antes de empilhar. */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+@media (max-width: 380px) {
+  .indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.indicador .rotulo {
+  font-size: 12px;
+  color: var(--color-slate);
+}
+
+.indicador .valor {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--color-ink);
+  /* Valores longos não devem estourar o cartão nem provocar rolagem horizontal no painel. */
+  overflow-wrap: anywhere;
+}
+
+.local-nome {
+  margin: 0;
+  color: var(--color-ink);
+}
+
+.coletas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coleta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 10px;
+  background: var(--color-canvas);
+}
+
+.coleta .data {
+  font-size: 14px;
+  color: var(--color-ink);
+  /* Tabular para as datas alinharem em coluna sem tabela. */
+  font-variant-numeric: tabular-nums;
+}
+
+.coleta .coletor {
+  margin-right: auto;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--color-slate);
+  overflow-wrap: anywhere;
+}
+
+/* Mais discreto que um nome real, e ainda assim texto: o vazio é que pareceria falha. */
+.coleta .coletor.ausente {
+  font-style: normal;
+  color: var(--color-stone);
+}
+
+.coleta .litros {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+.dica {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-slate);
+}
+
+.dica.aviso {
+  color: var(--color-amber, #9a6b00);
+}
+
+.dica.ok {
+  color: var(--color-success-text);
+}
+
+/* Arquivar/Reativar isolado à esquerda; as ações de avanço juntas à direita. */
+.rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.rodape .principais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* Em tela estreita o painel sobe de baixo e ocupa a largura toda: ações empilhadas e de toque fácil. */
+@media (max-width: 767px) {
+  .rodape {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .rodape .principais {
+    flex-direction: column-reverse;
+  }
+
+  .rodape button {
+    width: 100%;
+  }
+}

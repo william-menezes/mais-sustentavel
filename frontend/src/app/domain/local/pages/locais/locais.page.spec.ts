@@ -163,13 +163,28 @@ describe('LocalList', () => {
   });
 
   it('declara condição para toda coluna filtrável, não só para situação', () => {
-    // O binding substitui o mapa inteiro de filtros. Uma coluna ausente perderia a condição que o
-    // PrimeNG cria sozinho no `initFieldFilterConstraint` e abriria o painel do funil vazio.
-    const { comp } = montar({ ativos: [ATIVO] });
-    const filtros = comp.tabela()?.filters ?? {};
+    // Lê o mapa DECLARADO, de um componente ainda não renderizado, e é essencial que seja assim: a
+    // `p-table` não copia o mapa de filtros — guarda a mesma referência e o `initFieldFilterConstraint`
+    // escreve dentro dela, preenchendo as colunas que faltaram. Ler `tabela().filters` de um componente
+    // renderizado passaria mesmo com uma coluna não declarada, porque a própria biblioteca a teria
+    // acrescentado. A versão anterior deste teste fazia exatamente isso e era vacuosa.
+    TestBed.configureTestingModule({
+      imports: [LocalList],
+      providers: [
+        provideAnimationsAsync(),
+        providePrimeNG({ theme: { preset: Aura } }),
+        provideRouter([]),
+        { provide: LocalService, useValue: { listar: vi.fn().mockReturnValue(of([])) } },
+        { provide: ImpactoService, useValue: { porLocal: vi.fn().mockReturnValue(of([])) } },
+        { provide: PontoService, useValue: { listar: vi.fn().mockReturnValue(of([])) } },
+      ],
+    });
+    // Sem `detectChanges`: nenhum `p-column-filter` chegou a existir para completar o mapa.
+    const naoRenderizado = TestBed.createComponent(LocalList)
+      .componentInstance as unknown as { filtrosIniciais: Record<string, unknown> };
 
     ['nome', 'tipo', 'litros', 'situacao'].forEach((campo) => {
-      expect(Array.isArray(filtros[campo])).toBe(true);
+      expect(Array.isArray(naoRenderizado.filtrosIniciais[campo])).toBe(true);
     });
   });
 
@@ -319,14 +334,16 @@ describe('LocalList', () => {
     expect(comp.emEdicao()?.id).toBe('1');
   });
 
-  it('navega para a tela de pontos pelo item "Ver pontos" da linha', () => {
-    // Cadastrar ponto virou painel empilhado dentro da ficha; a navegação sobrou só para *ver* a
-    // lista completa, com QR e arquivamento, que a ficha não reproduz.
+  it('leva à visão geral de estações já filtrada por aquele local', () => {
+    // A tela de estações por local deixou de existir (research D8): "Ver pontos" agora aponta para a
+    // visão geral, semeando o filtro da coluna Local. O filtro vai por **nome** porque é ele que a
+    // coluna filtra e é ele que o Gestor lê e limpa no funil — um identificador filtraria igual e
+    // seria invisível na tela.
     const { comp } = montar({ ativos: [ATIVO] });
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     comp.verPontos(ATIVO);
 
-    expect(navegar).toHaveBeenCalledWith(['/locais', '1', 'pontos']);
+    expect(navegar).toHaveBeenCalledWith(['/pontos'], { queryParams: { local: ATIVO.nome } });
   });
 });

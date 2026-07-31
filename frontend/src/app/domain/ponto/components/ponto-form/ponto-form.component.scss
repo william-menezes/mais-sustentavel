@@ -1,22 +1,53 @@
-.explicacao,
+.formulario,
 .resultado {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .resultado {
   align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Mesmo empilhamento rótulo/controle do formulário de Local, para os dois painéis não divergirem. */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  min-width: 0;
+}
+
+.campo label,
+.rotulo {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* Local que veio pronto: é informação, não campo — sem borda, para não parecer editável. */
+.local-fixo {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-charcoal);
 }
 
 .dica {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--color-slate);
 }
 
 .dica.aviso {
   color: var(--color-amber, #9a6b00);
+  font-size: 14px;
+}
+
+/* "referência · local" identifica a estação criada antes de o QR ser impresso (FR-014). */
+.identificacao {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 /* Fundo branco explícito: o QR precisa de contraste máximo para ser lido pela câmera. */
@@ -31,7 +62,7 @@
 }
 
 /* Monoespaçada porque é identificador — alinha e evita confundir 0 com O. */
-.referencia {
+.referencia-curta {
   margin: 0;
   font-family: ui-monospace, 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
   font-size: 14px;
