@@ -29,6 +29,22 @@ export interface Local {
   criadoEm: string;
 }
 
+/** Situação exibida e filtrável na lista — derivada de `arquivado`. */
+export type SituacaoLocal = 'ATIVO' | 'ARQUIVADO';
+
+/**
+ * Local preparado para a lista, com os derivados de exibição materializados. Precisam ser campos
+ * reais da linha porque o filtro de coluna da tabela opera sobre o nome do campo.
+ *
+ * `litros` distingue três estados: valor (local com coleta), `0` (local sem coleta) e `null`
+ * (agregado de impacto indisponível). Confundir os dois últimos diria ao Gestor que um local não
+ * opera quando na verdade o serviço de impacto caiu.
+ */
+export interface LocalNaLista extends Local {
+  situacao: SituacaoLocal;
+  litros: number | null;
+}
+
 /**
  * Dados enviados para cadastrar/editar um Local. Diferente de {@link Local}, aqui os
  * obrigatórios são obrigatórios: o formulário só envia quando estão completos. O `cep` viaja
