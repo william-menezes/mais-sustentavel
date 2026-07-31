@@ -2,6 +2,7 @@ package br.com.maissustentavel.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -39,7 +41,15 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/csrf").permitAll()
                         .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults());
+                // 401 puro, sem cabeçalho WWW-Authenticate. Com httpBasic ativo, o
+                // BasicAuthenticationEntryPoint respondia `WWW-Authenticate: Basic`, e o
+                // navegador abria o diálogo nativo de usuário/senha por cima do SPA sempre
+                // que uma chamada caía em 401 (sessão ausente ou expirada). O único cliente
+                // desta API é o SPA, que se autentica por sessão em cookie: Basic não tem
+                // uso aqui, e o 401 limpo é o que o autenticacaoErroInterceptor espera para
+                // redirecionar ao login.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
         return http.build();
     }
 
