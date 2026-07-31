@@ -7,8 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -30,9 +30,13 @@ class SecurityConfigTest {
     }
 
     @Test
-    void noDefaultUserGrantsAccess() throws Exception {
-        // Nenhum usuário padrão deve existir: credenciais básicas quaisquer não autenticam.
-        mockMvc.perform(get("/qualquer-recurso-protegido").with(httpBasic("user", "qualquer-senha")))
-                .andExpect(status().isUnauthorized());
+    void naoDesafiaComBasicAuth() throws Exception {
+        // Regressão: com httpBasic ativo, o 401 vinha com `WWW-Authenticate: Basic` e o
+        // navegador abria o diálogo nativo de usuário/senha por cima do SPA a cada chamada
+        // sem sessão. O SPA autentica por cookie; o 401 deve vir limpo, para o
+        // autenticacaoErroInterceptor redirecionar ao login.
+        mockMvc.perform(get("/qualquer-recurso-protegido"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().doesNotExist("WWW-Authenticate"));
     }
 }
