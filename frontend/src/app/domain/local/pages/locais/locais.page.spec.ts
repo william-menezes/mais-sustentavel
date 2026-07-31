@@ -1,13 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import Aura from '@primeng/themes/aura';
+import { MenuItem } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ImpactoService } from '@domain/impacto/apis/impacto.api';
 import { ValorSocialLocal } from '@domain/impacto/interfaces/impacto.interface';
+import { PontoService } from '@domain/ponto/apis/ponto.api';
 import { LocalList } from './locais.page';
 import { LocalService } from '../../apis/local.api';
 import { Local, LocalNaLista } from '../../interfaces/local.interface';
@@ -19,6 +21,16 @@ interface Interno {
   enderecoResumido: (local: Local) => string;
   limparFiltros: () => void;
   arquivar: (local: Local) => void;
+  acoes: () => MenuItem[];
+  verDetalhes: (local: Local) => void;
+  detalheVisivel: () => boolean;
+  emDetalhe: () => Local | null;
+  litrosDoDetalhe: () => number | null;
+  valorSocialDoDetalhe: () => number | null;
+  aoNovoPonto: (local: Local) => void;
+  editar: (local: Local) => void;
+  formVisivel: () => boolean;
+  emEdicao: () => Local | null;
 }
 
 const ATIVO: Local = {
@@ -58,6 +70,7 @@ describe('LocalList', () => {
     reativar: ReturnType<typeof vi.fn>;
   };
   let impactoFake: { porLocal: ReturnType<typeof vi.fn> };
+  let pontoFake: { listar: ReturnType<typeof vi.fn> };
 
   function montar(
     opcoes: { ativos?: Local[]; arquivados?: Local[]; litros?: ValorSocialLocal[] | 'falha' } = {},
@@ -77,6 +90,8 @@ describe('LocalList', () => {
           opcoes.litros === 'falha' ? throwError(() => new Error('impacto fora')) : of(opcoes.litros ?? []),
         ),
     };
+    // O painel de detalhe é filho da página e injeta PontoService no construtor, mesmo fechado.
+    pontoFake = { listar: vi.fn().mockReturnValue(of([])) };
 
     TestBed.configureTestingModule({
       imports: [LocalList],
@@ -86,6 +101,7 @@ describe('LocalList', () => {
         provideRouter([]),
         { provide: LocalService, useValue: localFake },
         { provide: ImpactoService, useValue: impactoFake },
+        { provide: PontoService, useValue: pontoFake },
       ],
     });
 
@@ -190,5 +206,80 @@ describe('LocalList', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="vazio-por-filtro"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="vazio-sem-cadastro"]')).toBeFalsy();
+  });
+
+  // ---------- painel de detalhe ----------
+
+  it('oferece "Ver detalhes" como primeiro item do menu de ações', () => {
+    const { fixture, comp } = montar({ ativos: [ATIVO] });
+    const botao = fixture.nativeElement.querySelector('[data-testid="acoes"]') as HTMLButtonElement;
+
+    botao.click();
+    fixture.detectChanges();
+
+    expect(comp.acoes()[0].label).toBe('Ver detalhes');
+  });
+
+  it('abre o painel de detalhe pelo item do menu', () => {
+    const { fixture, comp } = montar({ ativos: [ATIVO] });
+    const botao = fixture.nativeElement.querySelector('[data-testid="acoes"]') as HTMLButtonElement;
+
+    botao.click();
+    fixture.detectChanges();
+    comp.acoes()[0].command?.({});
+    fixture.detectChanges();
+
+    expect(comp.detalheVisivel()).toBe(true);
+    expect(comp.emDetalhe()?.id).toBe('1');
+  });
+
+  it('reaproveita litros e valor social do agregado que a lista já buscou', () => {
+    // O detalhe não faz chamada nova ao impacto: o endpoint por local devolve os dois números.
+    const { comp } = montar({
+      ativos: [ATIVO],
+      litros: [{ localId: '1', localNome: ATIVO.nome, litrosReais: 1842, valorSocial: 1842 }],
+    });
+
+    comp.verDetalhes(ATIVO);
+
+    expect(comp.litrosDoDetalhe()).toBe(1842);
+    expect(comp.valorSocialDoDetalhe()).toBe(1842);
+    expect(impactoFake.porLocal).toHaveBeenCalledTimes(1);
+  });
+
+  it('passa nulo ao detalhe quando o agregado de impacto está indisponível', () => {
+    const { comp } = montar({ ativos: [ATIVO], litros: 'falha' });
+
+    comp.verDetalhes(ATIVO);
+
+    expect(comp.litrosDoDetalhe()).toBeNull();
+    expect(comp.valorSocialDoDetalhe()).toBeNull();
+  });
+
+  it('passa zero ao detalhe para local sem coleta', () => {
+    const { comp } = montar({ ativos: [ATIVO], litros: [] });
+
+    comp.verDetalhes(ATIVO);
+
+    expect(comp.litrosDoDetalhe()).toBe(0);
+    expect(comp.valorSocialDoDetalhe()).toBe(0);
+  });
+
+  it('abre o formulário de edição pelo detalhe', () => {
+    const { comp } = montar({ ativos: [ATIVO] });
+
+    comp.editar(ATIVO);
+
+    expect(comp.formVisivel()).toBe(true);
+    expect(comp.emEdicao()?.id).toBe('1');
+  });
+
+  it('navega para os pontos do local ao pedir novo ponto no detalhe', () => {
+    const { comp } = montar({ ativos: [ATIVO] });
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    comp.aoNovoPonto(ATIVO);
+
+    expect(navegar).toHaveBeenCalledWith(['/locais', '1', 'pontos']);
   });
 });

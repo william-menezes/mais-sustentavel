@@ -145,3 +145,20 @@
   [local]="emEdicao()"
   (salvo)="aoSalvar($event)"
 />
+
+<!--
+  Painel de leitura. Litros e valor social vêm do agregado que esta página já buscou: o detalhe
+  não conhece o serviço de impacto e não repete a chamada. As ações voltam como outputs porque o
+  tratamento de erro, o toast e a recarga da lista já vivem aqui.
+-->
+<app-local-detalhe
+  [visivel]="detalheVisivel()"
+  (visivelChange)="detalheVisivel.set($event)"
+  [local]="emDetalhe()"
+  [litros]="litrosDoDetalhe()"
+  [valorSocial]="valorSocialDoDetalhe()"
+  (editar)="editar($event)"
+  (arquivar)="arquivar($event)"
+  (reativar)="reativar($event)"
+  (novoPonto)="aoNovoPonto($event)"
+/>

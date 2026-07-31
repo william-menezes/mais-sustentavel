@@ -16,6 +16,7 @@ import { FormDrawer } from './form-drawer.component';
       titulo="Novo local"
       [trilha]="[{ label: 'Home' }, { label: 'Locais' }, { label: 'Novo' }]"
       [salvarDesabilitado]="desabilitado()"
+      [closable]="fechavel()"
       (salvar)="salvou = salvou + 1"
       (cancelar)="cancelou = cancelou + 1"
     >
@@ -26,8 +27,25 @@ import { FormDrawer } from './form-drawer.component';
 class Hospedeiro {
   visivel = signal(true);
   desabilitado = signal(false);
+  fechavel = signal(false);
   salvou = 0;
   cancelou = 0;
+}
+
+/** Hospeda o painel projetando o próprio rodapé — o caso do painel de detalhe. */
+@Component({
+  imports: [FormDrawer],
+  template: `
+    <app-form-drawer [(visivel)]="visivel" titulo="Detalhe" [closable]="true">
+      <p>Detalhe</p>
+      <div acoes>
+        <button type="button" data-testid="acao-propria">Arquivar</button>
+      </div>
+    </app-form-drawer>
+  `,
+})
+class HospedeiroComRodape {
+  visivel = signal(true);
 }
 
 describe('FormDrawer', () => {
@@ -41,6 +59,20 @@ describe('FormDrawer', () => {
       ],
     });
     const fixture = TestBed.createComponent(Hospedeiro);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function configurarComRodape() {
+    TestBed.configureTestingModule({
+      imports: [HospedeiroComRodape],
+      providers: [
+        provideAnimationsAsync(),
+        providePrimeNG({ theme: { preset: Aura } }),
+        { provide: ViewportService, useValue: { telaLarga: signal(true) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(HospedeiroComRodape);
     fixture.detectChanges();
     return fixture;
   }
@@ -106,6 +138,37 @@ describe('FormDrawer', () => {
 
     expect(fixture.componentInstance.cancelou).toBe(1);
     expect(fixture.componentInstance.visivel()).toBe(false);
+  });
+
+  it('não mostra o X de fechar por padrão', () => {
+    const fixture = configurar(true);
+
+    expect(fixture.nativeElement.querySelector('.p-drawer-close-button')).toBeFalsy();
+  });
+
+  it('mostra o X de fechar quando closable', () => {
+    const fixture = configurar(true);
+
+    fixture.componentInstance.fechavel.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.p-drawer-close-button')).toBeTruthy();
+  });
+
+  it('usa os botões padrão quando o pai não projeta rodapé', () => {
+    const fixture = configurar(true);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="cancelar"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="salvar"]')).toBeTruthy();
+  });
+
+  it('substitui o rodapé padrão pelo projetado', () => {
+    // O painel de detalhe não salva nada: Cancelar/Salvar dariam ao usuário ações que não existem.
+    const fixture = configurarComRodape();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="acao-propria"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="cancelar"]')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('[data-testid="salvar"]')).toBeFalsy();
   });
 
   // Cabeçalho e rodapé fixos enquanto o corpo rola é propriedade de layout: depende de altura

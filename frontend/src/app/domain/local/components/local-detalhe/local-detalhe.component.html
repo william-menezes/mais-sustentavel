@@ -1,0 +1,122 @@
+<!-- closable: sem Cancelar no rodapé, o X do cabeçalho é a única saída do painel. -->
+<app-form-drawer
+  [visivel]="visivel()"
+  (visivelChange)="visivel.set($event)"
+  [titulo]="titulo()"
+  [trilha]="trilha()"
+  [closable]="true"
+>
+  @if (local()) {
+    <div class="etiquetas">
+      <p-tag [value]="rotuloTipoLocal()" severity="secondary" />
+      @if (arquivado()) {
+        <p-tag value="Arquivado" severity="secondary" />
+      } @else {
+        <p-tag value="Ativo" severity="success" />
+      }
+    </div>
+
+    <div class="indicadores">
+      <div class="indicador">
+        <span class="rotulo">Acumulado</span>
+        <strong class="valor" data-testid="indicador-litros">{{ litrosFormatado() }}</strong>
+      </div>
+      <div class="indicador">
+        <span class="rotulo">Fundo social</span>
+        <strong class="valor" data-testid="indicador-valor-social">{{ valorSocialFormatado() }}</strong>
+      </div>
+      <div class="indicador">
+        <span class="rotulo">Pontos</span>
+        <strong class="valor" data-testid="indicador-pontos">{{ totalPontos() }}</strong>
+      </div>
+    </div>
+
+    <section class="bloco">
+      <h3 class="secao">Endereço</h3>
+      <p class="endereco" data-testid="endereco">{{ enderecoCompleto() }}</p>
+      @if (cepFormatado()) {
+        <p class="cep" data-testid="cep">CEP {{ cepFormatado() }}</p>
+      }
+
+      <!--
+        Placeholder honesto: geocodificação (converter o endereço em coordenadas) e mapa embutido
+        estão fora do escopo desta feature. A caixa reserva o lugar sem simular um mapa que não
+        existe — nada aqui é carregado de fora.
+      -->
+      <div class="mapa" data-testid="mapa">Mapa do local</div>
+    </section>
+
+    <section class="bloco">
+      <header class="titulo-secao">
+        <h3 class="secao">Pontos deste local</h3>
+        <button pButton type="button" variant="text" size="small" (click)="aoNovoPonto()">
+          + Novo ponto
+        </button>
+      </header>
+
+      @if (carregandoPontos()) {
+        <p class="dica" data-testid="pontos-carregando">Carregando pontos…</p>
+      } @else if (erroPontos()) {
+        <!-- Aviso, não erro de tela: só esta seção ficou sem dado; o resto do painel segue útil. -->
+        <p class="dica aviso" data-testid="pontos-erro">
+          Não foi possível carregar os pontos deste local.
+        </p>
+      } @else if (pontos().length === 0) {
+        <p class="dica" data-testid="pontos-vazio">Nenhum ponto cadastrado neste local.</p>
+      } @else {
+        <ul class="pontos">
+          @for (ponto of pontos(); track ponto.id) {
+            <li class="ponto">
+              <span class="ref">{{ refCurta(ponto.id) }}</span>
+              <span class="criado">{{ ponto.criadoEm | date: 'dd/MM/yyyy' }}</span>
+              @if (ponto.arquivado) {
+                <p-tag value="Arquivado" severity="secondary" data-testid="ponto-arquivado" />
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <!--
+    Filho direto do painel de propósito: o seletor `[acoes]` do `ng-content` casa com nós estáticos,
+    e um `@if` em volta empacotaria o rodapé num `ng-template` que casaria com o slot do corpo. Por
+    isso as ações são desabilitadas por binding quando não há local, em vez de removidas.
+  -->
+  <div acoes class="rodape">
+    <button
+      pButton
+      type="button"
+      severity="danger"
+      variant="text"
+      data-testid="alternar-arquivamento"
+      [disabled]="!local()"
+      (click)="aoAlternarArquivamento()"
+    >
+      {{ rotuloArquivamento() }}
+    </button>
+    <div class="principais">
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        variant="outlined"
+        data-testid="editar"
+        [disabled]="!local()"
+        (click)="aoEditar()"
+      >
+        Editar
+      </button>
+      <button
+        pButton
+        type="button"
+        data-testid="novo-ponto"
+        [disabled]="!local()"
+        (click)="aoNovoPonto()"
+      >
+        Novo ponto
+      </button>
+    </div>
+  </div>
+</app-form-drawer>

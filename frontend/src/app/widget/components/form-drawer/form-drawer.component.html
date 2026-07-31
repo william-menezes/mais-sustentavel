@@ -1,5 +1,6 @@
 <!--
-  closable=false: o fechamento é pelo botão Cancelar no rodapé, não por um X solto no topo.
+  closable: por padrão falso — no formulário o fechamento é pelo Cancelar do rodapé, não por um X
+  solto no topo. Quem projeta o próprio rodapé (leitura) liga o X, senão o painel não teria saída.
   dismissible=false: clique na máscara não descarta um formulário preenchido por acidente.
 -->
 <p-drawer
@@ -8,7 +9,7 @@
   [position]="posicao()"
   [style]="dimensao()"
   [modal]="true"
-  [closable]="false"
+  [closable]="closable()"
   [dismissible]="false"
 >
   <ng-template #header>
@@ -25,26 +26,32 @@
   </div>
 
   <ng-template #footer>
-    <div class="acoes">
-      <button
-        pButton
-        type="button"
-        severity="secondary"
-        variant="outlined"
-        data-testid="cancelar"
-        (click)="aoCancelar()"
-      >
-        Cancelar
-      </button>
-      <button
-        pButton
-        type="button"
-        data-testid="salvar"
-        [disabled]="salvarDesabilitado() || salvando()"
-        (click)="salvar.emit()"
-      >
-        {{ salvando() ? 'Salvando…' : rotuloSalvar() }}
-      </button>
-    </div>
+    <!--
+      Rodapé projetável com conteúdo de reserva: sem um `<div acoes>` do hospedeiro valem os botões
+      de formulário abaixo — é o que mantém o local-form funcionando sem mudar uma linha.
+    -->
+    <ng-content select="[acoes]">
+      <div class="acoes">
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          variant="outlined"
+          data-testid="cancelar"
+          (click)="aoCancelar()"
+        >
+          Cancelar
+        </button>
+        <button
+          pButton
+          type="button"
+          data-testid="salvar"
+          [disabled]="salvarDesabilitado() || salvando()"
+          (click)="salvar.emit()"
+        >
+          {{ salvando() ? 'Salvando…' : rotuloSalvar() }}
+        </button>
+      </div>
+    </ng-content>
   </ng-template>
 </p-drawer>

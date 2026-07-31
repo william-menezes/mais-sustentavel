@@ -7,12 +7,16 @@ import { DrawerModule } from 'primeng/drawer';
 import { ViewportService } from '@shared/services/viewport/viewport.service';
 
 /**
- * Painel de formulário sobreposto: à direita no desktop, subindo de baixo em tela estreita, com
- * trilha de navegação e título no cabeçalho e as ações no rodapé — ambos fora da área que rola.
+ * Painel sobreposto: à direita no desktop, subindo de baixo em tela estreita, com trilha de
+ * navegação e título no cabeçalho e as ações no rodapé — ambos fora da área que rola.
  *
- * <p>Vive em `widget/` porque não conhece domínio nenhum: o formulário entra por
- * `<ng-content>` e quem hospeda decide quando salvar está disponível. É o mesmo painel que as
- * telas de Pontos e Coletas vão reaproveitar, inclusive empilhado sobre outro.
+ * <p>Vive em `widget/` porque não conhece domínio nenhum: o corpo entra por `<ng-content>` e quem
+ * hospeda decide quando salvar está disponível. É o mesmo painel que as telas de Pontos e Coletas
+ * vão reaproveitar, inclusive empilhado sobre outro.
+ *
+ * <p>Serve formulário e leitura: sem rodapé projetado ele mantém Cancelar/Salvar; com um
+ * `<div acoes>` o hospedeiro põe as ações que quiser (e aí `closable` costuma fazer sentido, já
+ * que não há mais um Cancelar para fechar o painel).
  */
 @Component({
   selector: 'app-form-drawer',
@@ -32,6 +36,11 @@ export class FormDrawer {
   readonly salvarDesabilitado = input(false);
   readonly salvando = input(false);
   readonly rotuloSalvar = input('Salvar');
+  /**
+   * Exibe o X de fechar no cabeçalho. Fica desligado por padrão porque, no formulário, fechar é
+   * papel do Cancelar do rodapé — um X solto descartaria um formulário preenchido sem aviso.
+   */
+  readonly closable = input(false);
 
   readonly salvar = output<void>();
   readonly cancelar = output<void>();

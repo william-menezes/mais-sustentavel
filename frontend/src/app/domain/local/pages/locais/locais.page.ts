@@ -11,7 +11,9 @@ import { ToastModule } from 'primeng/toast';
 import { catchError, forkJoin, of } from 'rxjs';
 
 import { ImpactoService } from '@domain/impacto/apis/impacto.api';
+import { ValorSocialLocal } from '@domain/impacto/interfaces/impacto.interface';
 import { LocalService } from '../../apis/local.api';
+import { LocalDetalhe } from '../../components/local-detalhe/local-detalhe.component';
 import { LocalForm } from '../../components/local-form/local-form.component';
 import { TIPOS_LOCAL, rotuloTipo } from '../../constants/tipo-local.constant';
 import { Local, LocalNaLista } from '../../interfaces/local.interface';
@@ -35,6 +37,7 @@ import { Local, LocalNaLista } from '../../interfaces/local.interface';
     MenuModule,
     ToastModule,
     LocalForm,
+    LocalDetalhe,
   ],
   providers: [MessageService],
   templateUrl: './locais.page.html',
@@ -52,12 +55,18 @@ export class LocalList implements OnInit, AfterViewInit {
   private filtroSemeado = false;
 
   protected readonly locais = signal<Local[]>([]);
-  /** `null` quando o agregado de impacto falhou — distinto de um mapa vazio. */
-  protected readonly litrosPorLocal = signal<Map<string, number> | null>(null);
+  /**
+   * Agregado de impacto indexado por local, guardado inteiro (litros e valor social) porque o
+   * endpoint devolve os dois de uma vez — assim o painel de detalhe recebe ambos por input em vez
+   * de repetir a chamada. `null` quando o agregado falhou, distinto de um mapa vazio.
+   */
+  protected readonly impactoPorLocal = signal<Map<string, ValorSocialLocal> | null>(null);
   protected readonly carregando = signal(false);
   protected readonly formVisivel = signal(false);
   protected readonly emEdicao = signal<Local | null>(null);
   protected readonly acoes = signal<MenuItem[]>([]);
+  protected readonly detalheVisivel = signal(false);
+  protected readonly emDetalhe = signal<Local | null>(null);
 
   protected readonly rotuloTipo = rotuloTipo;
   protected readonly opcoesTipo = TIPOS_LOCAL;
@@ -68,13 +77,20 @@ export class LocalList implements OnInit, AfterViewInit {
 
   /** Linhas da tabela: o Local mais os derivados que o filtro de coluna precisa como campo. */
   protected readonly linhas = computed<LocalNaLista[]>(() => {
-    const mapa = this.litrosPorLocal();
+    const mapa = this.impactoPorLocal();
     return this.locais().map((local) => ({
       ...local,
       situacao: local.arquivado ? ('ARQUIVADO' as const) : ('ATIVO' as const),
-      litros: mapa ? (mapa.get(local.id) ?? 0) : null,
+      litros: mapa ? (mapa.get(local.id)?.litrosReais ?? 0) : null,
     }));
   });
+
+  /**
+   * Litros e valor social do local em detalhe, tirados do mesmo mapa da lista. `null` quando o
+   * agregado está indisponível; `0` quando o local está no acervo mas não teve coleta.
+   */
+  protected readonly litrosDoDetalhe = computed(() => this.doAgregado((v) => v.litrosReais));
+  protected readonly valorSocialDoDetalhe = computed(() => this.doAgregado((v) => v.valorSocial));
 
   ngOnInit(): void {
     this.carregar();
@@ -104,6 +120,21 @@ export class LocalList implements OnInit, AfterViewInit {
   }
 
   /**
+   * Um número do agregado para o local em detalhe. Método compartilhado pelos dois computeds
+   * porque a distinção entre "não veio" e "não recolheu" é a mesma para litros e valor social.
+   */
+  private doAgregado(extrair: (valor: ValorSocialLocal) => number): number | null {
+    const mapa = this.impactoPorLocal();
+    const alvo = this.emDetalhe();
+    if (!mapa || !alvo) {
+      return null;
+    }
+    const entrada = mapa.get(alvo.id);
+    // Ausente do agregado significa nenhuma coleta registrada — aqui zero é o dado correto.
+    return entrada ? extrair(entrada) : 0;
+  }
+
+  /**
    * Endereço em uma linha, para o subtítulo da coluna Local (FR-015).
    *
    * Os componentes são filtrados antes de juntar porque locais migrados do texto livre têm
@@ -124,8 +155,8 @@ export class LocalList implements OnInit, AfterViewInit {
     }).subscribe({
       next: ({ ativos, arquivados, litros }) => {
         this.locais.set([...ativos, ...arquivados]);
-        this.litrosPorLocal.set(
-          litros ? new Map(litros.map((valor) => [valor.localId, valor.litrosReais])) : null,
+        this.impactoPorLocal.set(
+          litros ? new Map(litros.map((valor) => [valor.localId, valor])) : null,
         );
         this.carregando.set(false);
         if (litros === null) {
@@ -164,6 +195,7 @@ export class LocalList implements OnInit, AfterViewInit {
 
   protected abrirAcoes(evento: Event, linha: LocalNaLista): void {
     this.acoes.set([
+      { label: 'Ver detalhes', command: () => this.verDetalhes(linha) },
       { label: 'Ver pontos', command: () => this.verPontos(linha) },
       { label: 'Editar', command: () => this.editar(linha) },
       linha.arquivado
@@ -173,8 +205,18 @@ export class LocalList implements OnInit, AfterViewInit {
     this.menuAcoes()?.toggle(evento);
   }
 
+  protected verDetalhes(local: Local): void {
+    this.emDetalhe.set(local);
+    this.detalheVisivel.set(true);
+  }
+
   protected verPontos(local: Local): void {
     void this.router.navigate(['/locais', local.id, 'pontos']);
+  }
+
+  /** O cadastro de ponto acontece na tela de Pontos do local — é para lá que o detalhe manda. */
+  protected aoNovoPonto(local: Local): void {
+    this.verPontos(local);
   }
 
   protected novo(): void {
