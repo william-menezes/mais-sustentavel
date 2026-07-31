@@ -120,3 +120,15 @@
     </div>
   </div>
 </app-form-drawer>
+
+<!--
+  Painel empilhado: fica por cima desta ficha, que permanece aberta atrás. Declarado fora do
+  `app-form-drawer` de propósito — dentro dele seria projetado no corpo da ficha e rolaria junto com
+  o conteúdo, em vez de ser uma camada própria.
+-->
+<app-ponto-form
+  [visivel]="pontoVisivel()"
+  (visivelChange)="pontoVisivel.set($event)"
+  [local]="local()"
+  (criado)="aoPontoCriado()"
+/>

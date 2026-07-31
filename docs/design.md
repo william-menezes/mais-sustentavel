@@ -405,9 +405,24 @@ buscando no backend. Quando a busca não casa com nada, o estado vazio oferece *
 abre um **segundo painel sobre o primeiro**, sem fechá-lo. Ao salvar, o registro criado volta já
 selecionado no campo e o painel de cima fecha.
 
-> Este terceiro padrão foi definido junto com os outros dois, mas **ainda não foi exercitado**:
-> Local não tem campo relacional. A primeira aplicação real — e a validação de painel sobre painel —
-> acontece na tela de Pontos de coleta.
+**Painel sobre painel já está exercitado**, ainda que sem autocomplete: "Novo ponto" na ficha do
+Local abre o cadastro de ponto empilhado, e a ficha permanece aberta atrás. O que aprendemos ali vale
+para o padrão inteiro:
+
+- **O empilhamento não precisa de configuração.** O `ZIndexUtils` do PrimeNG mantém uma pilha e
+  incrementa a camada a cada painel modal (1101, depois 1102), então o de cima aparece acima sem
+  `baseZIndex` na mão.
+- **Declare o painel de cima fora do de baixo.** Dentro do `app-form-drawer`, ele seria projetado no
+  corpo do primeiro painel e rolaria junto com o conteúdo, em vez de ser uma camada própria.
+- **Quem hospeda o painel de cima é quem mostra a lista afetada**, não a página. A ficha do Local
+  hospeda o cadastro de ponto porque é ela que exibe os pontos e precisa recarregá-los ao final.
+- **Empilhar em vez de fechar é uma escolha por ação.** Editar e arquivar fecham a ficha, porque o
+  dado exibido nela muda e ficaria velho atrás do formulário. Criar um filho não muda o pai: o
+  usuário volta para a mesma ficha, agora com o item novo na lista.
+
+> O que continua **não exercitado** é a parte do **autocomplete**: nenhuma tela ainda tem campo que
+> aponta para outro registro. Local não tem, e o cadastro de Ponto não tem campo nenhum. A primeira
+> aplicação de "buscar, não achar, + adicionar" será a tela de Coletas.
 
 ### Orçamento de bundle
 

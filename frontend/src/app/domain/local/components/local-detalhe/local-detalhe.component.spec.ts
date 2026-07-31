@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import Aura from '@primeng/themes/aura';
+import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -27,10 +28,11 @@ interface Interno {
   aoEditar: () => void;
   aoAlternarArquivamento: () => void;
   aoNovoPonto: () => void;
+  aoPontoCriado: () => void;
+  pontoVisivel: () => boolean;
   editar: { subscribe: (fn: (local: Local) => void) => void };
   arquivar: { subscribe: (fn: (local: Local) => void) => void };
   reativar: { subscribe: (fn: (local: Local) => void) => void };
-  novoPonto: { subscribe: (fn: (local: Local) => void) => void };
 }
 
 const COMPLETO: Local = {
@@ -95,6 +97,9 @@ describe('LocalDetalhe', () => {
         provideAnimationsAsync(),
         providePrimeNG({ theme: { preset: Aura } }),
         { provide: PontoService, useValue: pontoFake },
+        // O painel de novo ponto é filho desta ficha e injeta MessageService no construtor, mesmo
+        // fechado. Na aplicação quem provê é a página, que já tem o <p-toast>.
+        MessageService,
       ],
     });
 
@@ -348,15 +353,37 @@ describe('LocalDetalhe', () => {
     expect(arquivou).toBeUndefined();
   });
 
-  it('emite novoPonto e fecha o painel', () => {
+  it('abre o cadastro de ponto empilhado, sem fechar a ficha', () => {
+    // O empilhamento é o ponto: editar e arquivar fecham porque o dado exibido muda, mas ao criar um
+    // ponto o Gestor volta para esta mesma ficha — agora com o ponto novo na lista.
     const { comp } = abrir();
-    let emitido: Local | undefined;
-    comp.novoPonto.subscribe((local) => (emitido = local));
 
     comp.aoNovoPonto();
 
-    expect(emitido).toEqual(COMPLETO);
-    expect(comp.visivel()).toBe(false);
+    expect(comp.pontoVisivel()).toBe(true);
+    expect(comp.visivel()).toBe(true);
+  });
+
+  it('deixa os dois painéis na tela ao empilhar', () => {
+    // A asserção que corresponde ao pedido: o painel de cima **acrescenta** uma camada, não
+    // substitui a de baixo. Contar sinais não provaria isso; contar painéis no DOM prova.
+    const { fixture, comp } = abrir();
+    expect(document.querySelectorAll('.p-drawer').length).toBe(1);
+
+    comp.aoNovoPonto();
+    fixture.detectChanges();
+
+    expect(document.querySelectorAll('.p-drawer').length).toBe(2);
+  });
+
+  it('recarrega a lista de pontos depois de criar um', () => {
+    const { comp } = abrir({ pontos: [PONTO] });
+    expect(pontoFake.listar).toHaveBeenCalledTimes(1);
+
+    comp.aoPontoCriado();
+
+    expect(pontoFake.listar).toHaveBeenCalledTimes(2);
+    expect(pontoFake.listar).toHaveBeenLastCalledWith(COMPLETO.id);
   });
 
   it('não emite ação nenhuma sem local', () => {
@@ -364,13 +391,13 @@ describe('LocalDetalhe', () => {
     let emitiu = false;
     comp.editar.subscribe(() => (emitiu = true));
     comp.arquivar.subscribe(() => (emitiu = true));
-    comp.novoPonto.subscribe(() => (emitiu = true));
 
     comp.aoEditar();
     comp.aoAlternarArquivamento();
     comp.aoNovoPonto();
 
     expect(emitiu).toBe(false);
+    expect(comp.pontoVisivel()).toBe(false);
     expect(pontoFake.listar).not.toHaveBeenCalled();
   });
 });

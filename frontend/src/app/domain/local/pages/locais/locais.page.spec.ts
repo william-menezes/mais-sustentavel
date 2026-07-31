@@ -29,7 +29,7 @@ interface Interno {
   emDetalhe: () => Local | null;
   litrosDoDetalhe: () => number | null;
   valorSocialDoDetalhe: () => number | null;
-  aoNovoPonto: (local: Local) => void;
+  verPontos: (local: Local) => void;
   editar: (local: Local) => void;
   formVisivel: () => boolean;
   emEdicao: () => Local | null;
@@ -319,11 +319,13 @@ describe('LocalList', () => {
     expect(comp.emEdicao()?.id).toBe('1');
   });
 
-  it('navega para os pontos do local ao pedir novo ponto no detalhe', () => {
+  it('navega para a tela de pontos pelo item "Ver pontos" da linha', () => {
+    // Cadastrar ponto virou painel empilhado dentro da ficha; a navegação sobrou só para *ver* a
+    // lista completa, com QR e arquivamento, que a ficha não reproduz.
     const { comp } = montar({ ativos: [ATIVO] });
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-    comp.aoNovoPonto(ATIVO);
+    comp.verPontos(ATIVO);
 
     expect(navegar).toHaveBeenCalledWith(['/locais', '1', 'pontos']);
   });

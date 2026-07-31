@@ -227,11 +227,6 @@ export class LocalList implements OnInit, AfterViewInit {
     void this.router.navigate(['/locais', local.id, 'pontos']);
   }
 
-  /** O cadastro de ponto acontece na tela de Pontos do local — é para lá que o detalhe manda. */
-  protected aoNovoPonto(local: Local): void {
-    this.verPontos(local);
-  }
-
   protected novo(): void {
     this.emEdicao.set(null);
     this.formVisivel.set(true);

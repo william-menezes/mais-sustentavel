@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 
 import { PontoService } from '@domain/ponto/apis/ponto.api';
+import { PontoForm } from '@domain/ponto/components/ponto-form/ponto-form.component';
 import { Ponto } from '@domain/ponto/interfaces/ponto.interface';
 import { FormDrawer } from '@widget/components/form-drawer/form-drawer.component';
 import { rotuloTipo } from '../../constants/tipo-local.constant';
@@ -15,9 +16,13 @@ import { Local } from '../../interfaces/local.interface';
  * pontos de coleta que pertencem a ele. Reaproveita o {@link FormDrawer} com `closable` ligado e
  * rodapé próprio, porque aqui não há nada para salvar.
  *
- * <p>Não escreve nada: arquivar, reativar, editar e criar ponto saem como outputs para a página,
- * que já concentra o tratamento de erro, o toast e a recarga da lista. Litros e valor social
- * chegam por input do agregado que a listagem já buscou — o detalhe não repete a chamada.
+ * <p>Arquivar, reativar e editar saem como outputs para a página, que já concentra o tratamento de
+ * erro, o toast e a recarga da lista. Litros e valor social chegam por input do agregado que a
+ * listagem já buscou — o detalhe não repete a chamada.
+ *
+ * <p>Cadastrar ponto é a exceção e fica aqui: abre um {@link PontoForm} **empilhado por cima** desta
+ * ficha, que continua aberta atrás. É esta ficha que mostra a lista de pontos, então é ela que
+ * precisa recarregá-la ao final — devolver a ação para a página só traria o trabalho de volta.
  *
  * <p><b>O que o mock de referência mostra e esta tela não:</b> nome do ponto ("Bloco B ·
  * garagem"), litros por ponto ("614 L") e data da última coleta ("coleta 11/07"). Nenhum dos três
@@ -28,7 +33,7 @@ import { Local } from '../../interfaces/local.interface';
  */
 @Component({
   selector: 'app-local-detalhe',
-  imports: [DatePipe, FormDrawer, ButtonModule, TagModule],
+  imports: [DatePipe, FormDrawer, PontoForm, ButtonModule, TagModule],
   templateUrl: './local-detalhe.component.html',
   styleUrl: './local-detalhe.component.scss',
 })
@@ -58,8 +63,9 @@ export class LocalDetalhe {
   readonly editar = output<Local>();
   readonly arquivar = output<Local>();
   readonly reativar = output<Local>();
-  readonly novoPonto = output<Local>();
 
+  /** Visibilidade do painel de novo ponto, empilhado sobre esta ficha. */
+  protected readonly pontoVisivel = signal(false);
   protected readonly pontos = signal<Ponto[]>([]);
   protected readonly carregandoPontos = signal(false);
   /** Falha da busca de pontos: degrada a seção com um aviso, sem derrubar o painel. */
@@ -189,13 +195,23 @@ export class LocalDetalhe {
     }
   }
 
+  /**
+   * Abre o cadastro de ponto **por cima** desta ficha, que fica aberta atrás. Diferente de editar e
+   * arquivar: ali o dado exibido aqui muda e o painel sairia de cena; aqui o Gestor volta para a
+   * mesma ficha, agora com o ponto novo na lista.
+   */
   protected aoNovoPonto(): void {
-    const alvo = this.local();
-    if (!alvo) {
+    if (!this.local()) {
       return;
     }
-    // O cadastro acontece na tela de Pontos: navegar com o painel aberto deixaria a máscara presa.
-    this.visivel.set(false);
-    this.novoPonto.emit(alvo);
+    this.pontoVisivel.set(true);
+  }
+
+  /** Recarrega a lista para o ponto recém-criado aparecer, com o painel de cima ainda visível. */
+  protected aoPontoCriado(): void {
+    const alvo = this.local();
+    if (alvo) {
+      this.carregarPontos(alvo.id);
+    }
   }
 }
