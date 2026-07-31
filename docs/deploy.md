@@ -5,11 +5,19 @@ Guia para colocar a **API** no ar na Render (banco no **Supabase**) e o **fronte
 > Ordem: **1) Supabase** (para ter a string de conexão) → **2) Render** (usa essa string) →
 > **3) Vercel** (reescreve `/api` para a Render).
 >
-> As duas pontas se referenciam, e os dois domínios são previsíveis pelos nomes dos projetos
-> (`mais-sustentavel-api.onrender.com` e `<projeto>.vercel.app`), então não há impasse: a
-> Vercel já vem com a URL da Render no [`frontend/vercel.json`](../frontend/vercel.json), e a
-> Render recebe o domínio da Vercel em `APP_PONTO_BASE_URL`. Se o domínio da Vercel sair
-> diferente do esperado, corrija `APP_PONTO_BASE_URL` **antes de cadastrar o primeiro ponto**.
+> As duas pontas se referenciam: a Vercel precisa da URL da Render em
+> [`frontend/vercel.json`](../frontend/vercel.json), e a Render precisa do domínio da Vercel
+> em `APP_PONTO_BASE_URL`.
+>
+> **Não deduza esses endereços pelo nome do serviço** — copie-os dos painéis depois de criar
+> cada um. Se o nome desejado estiver ocupado, a plataforma gera um diferente, e o sintoma é
+> silencioso: a reescrita da Vercel devolve 404 com `x-render-routing: no-server`, como se a
+> API estivesse fora do ar. Endereços em uso hoje:
+>
+> | Serviço | URL |
+> |---|---|
+> | API (Render) | `https://mais-sustentavel.onrender.com` |
+> | Frontend (Vercel) | `https://mais-sustentavel.vercel.app` |
 
 ---
 
@@ -131,7 +139,7 @@ rotas; no painel basta apontar a raiz do projeto.
   Se o Flyway conectar, a ligação com o Supabase está OK.
 - Depois de "Live", acesse:
   ```
-  https://mais-sustentavel-api.onrender.com/actuator/health   →  {"status":"UP"}
+  https://mais-sustentavel.onrender.com/actuator/health   →  {"status":"UP"}
   ```
   `UP` confirma app + banco saudáveis (o resto da API responde 401 até a AC-01 implementar o login).
 

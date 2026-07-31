@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:caminho*",
-      "destination": "https://mais-sustentavel-api.onrender.com/api/:caminho*"
+      "destination": "https://mais-sustentavel.onrender.com/api/:caminho*"
     },
     {
       "source": "/(.*)",
