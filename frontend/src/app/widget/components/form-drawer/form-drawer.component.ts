@@ -49,6 +49,15 @@ export class FormDrawer {
    * desaparecer aos olhos de quem precisa saber que há algo atrás para voltar.
    */
   readonly nivel = input(0);
+  /**
+   * O que falta preencher enquanto salvar estiver indisponível, exibido no rodapé (FR-049).
+   *
+   * <p>Texto livre, fornecido por quem hospeda, e não uma lista montada aqui: as telas de referência
+   * frasearam de duas formas diferentes — "Falta preencher: tipo, CEP…" e "Escolha o local do ponto."
+   * A primeira enumera campos, a segunda instrui. Montar a frase exigiria conhecer os campos de cada
+   * formulário, o que este painel não conhece e não deve, já que vive em `widget/`.
+   */
+  readonly pendencia = input('');
 
   readonly salvar = output<void>();
   readonly cancelar = output<void>();

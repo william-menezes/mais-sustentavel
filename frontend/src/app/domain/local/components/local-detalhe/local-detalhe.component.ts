@@ -24,12 +24,11 @@ import { Local } from '../../interfaces/local.interface';
  * ficha, que continua aberta atrás. É esta ficha que mostra a lista de pontos, então é ela que
  * precisa recarregá-la ao final — devolver a ação para a página só traria o trabalho de volta.
  *
- * <p><b>O que o mock de referência mostra e esta tela não:</b> nome do ponto ("Bloco B ·
- * garagem"), litros por ponto ("614 L") e data da última coleta ("coleta 11/07"). Nenhum dos três
- * existe na API: {@link Ponto} não tem campo de nome e o agregado de impacto só desce por local,
- * não por ponto. Inventar rótulo seria mentira; buscar coleta por ponto seria uma chamada por
- * linha (N+1) para um dado que a tela de Pontos já mostra. Fica de fora até a API oferecer nome de
- * ponto e agregado por ponto.
+ * <p><b>O que o mock de referência mostra e esta tela não:</b> litros por ponto ("614 L") e data da
+ * última coleta ("coleta 11/07"). O agregado de impacto só desce por local, não por ponto, e buscar
+ * coleta por ponto seria uma chamada por linha (N+1) para um dado que a visão geral de estações e a
+ * ficha de cada uma já mostram. A **referência** do ponto passou a existir na 007 e é exibida lá; aqui
+ * a lista segue pela referência curta, que é o que identifica a estação sem depender do rótulo.
  */
 @Component({
   selector: 'app-local-detalhe',
@@ -59,6 +58,13 @@ export class LocalDetalhe {
   readonly litros = input<number | null>(null);
   /** Valor social acumulado vindo do mesmo agregado; `null` = indisponível. */
   readonly valorSocial = input<number | null>(null);
+  /**
+   * Profundidade na pilha, repassada ao painel compartilhado. `0` quando a ficha abre sobre a lista de
+   * Locais; maior quando abre **sobre outro painel** — é o caso de "ver o local" a partir da ficha de
+   * uma estação. Sem repassar, as duas fichas sairiam com a mesma largura e a de cima cobriria a de
+   * baixo por inteiro, sem o recuo que diz que há algo atrás (FR-044).
+   */
+  readonly nivel = input(0);
 
   readonly editar = output<Local>();
   readonly arquivar = output<Local>();

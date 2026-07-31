@@ -33,6 +33,21 @@ public class Ponto {
     @JoinColumn(name = "local_id", nullable = false)
     private Local local;
 
+    /**
+     * Onde a estação fica dentro do local ("portaria", "bloco B", "cantina").
+     *
+     * <p>Sem {@code nullable = false}: as estações cadastradas antes da V7 não têm referência, e
+     * inventar uma foi recusado — ela é o título do cartão e do painel, então um sentinela apareceria
+     * como o nome da coisa em toda a interface. A obrigatoriedade em cadastros novos vive no
+     * {@code PontoRequest}.
+     *
+     * <p>Sem {@code length}: o limite de 60 caracteres é do banco, por CHECK, e do DTO, por
+     * {@code @Size}. Declará-lo aqui faria o {@code ddl-auto: validate} comparar com uma coluna
+     * {@code text} sem tamanho declarado.
+     */
+    @Column(name = "referencia")
+    private String referencia;
+
     @Column(name = "qr_conteudo", nullable = false, unique = true)
     private String qrConteudo;
 
@@ -57,6 +72,14 @@ public class Ponto {
 
     public void setLocal(Local local) {
         this.local = local;
+    }
+
+    public String getReferencia() {
+        return referencia;
+    }
+
+    public void setReferencia(String referencia) {
+        this.referencia = referencia;
     }
 
     public String getQrConteudo() {

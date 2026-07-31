@@ -7,6 +7,7 @@ import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
+import br.com.maissustentavel.api.ponto.PontoFixture;
 import br.com.maissustentavel.api.ponto.domain.Ponto;
 import br.com.maissustentavel.api.ponto.repository.PontoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.containsString;
@@ -65,10 +65,7 @@ class ImpactoControllerTest {
     }
 
     private Ponto ponto(Local l) {
-        Ponto p = new Ponto();
-        p.setId(UUID.randomUUID());
-        p.setLocal(l);
-        p.setQrConteudo("http://localhost:4200/p/" + p.getId());
+        Ponto p = PontoFixture.ativo(l);
         return pontoRepository.saveAndFlush(p);
     }
 

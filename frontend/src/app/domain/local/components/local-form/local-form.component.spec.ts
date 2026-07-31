@@ -32,6 +32,7 @@ interface Interno {
   uf: WritableSignal<Uf | null>;
   cep: () => string;
   salvarDesabilitado: () => boolean;
+  pendencia: () => string;
   titulo: () => string;
   erro: () => string | null;
   avisoCep: () => string | null;
@@ -331,6 +332,74 @@ describe('LocalForm', () => {
 
     expect(cepFake.consultar).not.toHaveBeenCalled();
     expect(comp.rua()).toBe('Avenida João Naves de Ávila');
+  });
+
+  // ---------- US6: aviso de pendências no rodapé ----------
+
+  /** Texto do aviso renderizado pelo painel; string vazia quando o aviso não está na tela. */
+  function avisoNoRodape(fixture: ComponentFixture<LocalForm>): string {
+    const aviso = fixture.nativeElement.querySelector('[data-testid="pendencia"]');
+    return aviso ? ((aviso.textContent as string) ?? '').trim() : '';
+  }
+
+  it('nomeia no rodapé os obrigatórios em branco, na ordem do formulário', () => {
+    const { fixture } = abrir();
+
+    expect(avisoNoRodape(fixture)).toBe(
+      'Falta preencher: nome, tipo, CEP, rua, número, bairro, cidade, UF.',
+    );
+  });
+
+  it('nunca cobra o complemento, único campo opcional', () => {
+    const { fixture, comp } = abrir();
+
+    // Formulário vazio: o complemento está em branco como todos os outros e mesmo assim não entra.
+    expect(comp.pendencia()).not.toContain('complemento');
+
+    preencher(comp);
+    fixture.detectChanges();
+
+    // Obrigatórios completos e complemento em branco não é pendência alguma.
+    expect(comp.complemento()).toBe('');
+    expect(avisoNoRodape(fixture)).toBe('');
+  });
+
+  it('esconde o aviso e libera salvar quando o formulário está completo', () => {
+    const { fixture, comp } = abrir();
+
+    preencher(comp);
+    fixture.detectChanges();
+    const salvar = fixture.nativeElement.querySelector(
+      '[data-testid="salvar"]',
+    ) as HTMLButtonElement;
+
+    expect(avisoNoRodape(fixture)).toBe('');
+    expect(salvar.disabled).toBe(false);
+  });
+
+  it('encurta a lista conforme os campos vão sendo preenchidos', () => {
+    const { fixture, comp } = abrir();
+
+    comp.nome.set('Escola A');
+    comp.tipo.set('ESCOLA');
+    fixture.detectChanges();
+    expect(avisoNoRodape(fixture)).toBe('Falta preencher: CEP, rua, número, bairro, cidade, UF.');
+
+    // O CEP completo dispara a consulta, que preenche rua, bairro, cidade e UF de uma vez.
+    comp.cepMascarado.set('38408-100');
+    fixture.detectChanges();
+    expect(avisoNoRodape(fixture)).toBe('Falta preencher: número.');
+  });
+
+  it('volta a cobrar o campo que for esvaziado', () => {
+    const { fixture, comp } = abrir();
+
+    preencher(comp);
+    comp.numero.set('   ');
+    fixture.detectChanges();
+
+    expect(avisoNoRodape(fixture)).toBe('Falta preencher: número.');
+    expect(comp.salvarDesabilitado()).toBe(true);
   });
 
   it('avisa quando o salvamento falha e mantém o painel aberto', () => {

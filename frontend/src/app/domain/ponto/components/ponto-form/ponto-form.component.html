@@ -1,40 +1,99 @@
 <!--
-  Empilhado sobre a ficha do Local: o painel de baixo permanece aberto. `closable` porque, no passo
-  do QR, o rodapé não tem um Cancelar — e no passo de confirmação nada foi digitado para se perder.
+  `nivel` vem de quem hospeda: 0 pela visão geral, 1 pela ficha do Local, que fica aberta atrás.
+  `closable` porque, no passo do QR, o rodapé não tem um Cancelar.
 -->
 <app-form-drawer
   [visivel]="visivel()"
   (visivelChange)="visivel.set($event)"
-  titulo="Novo ponto de coleta"
+  [titulo]="titulo()"
   [trilha]="trilha()"
   [closable]="true"
-  [nivel]="1"
+  [nivel]="nivel()"
+  [pendencia]="pendencia()"
 >
   @if (novoPonto()) {
     <div class="resultado">
       <p class="dica" data-testid="ponto-criado">
         Ponto criado. Imprima o código e fixe no lugar onde o óleo é entregue.
       </p>
+      <p class="identificacao" data-testid="identificacao-criada">{{ identificacaoDoCriado() }}</p>
       <!--
         Mesma origem: o cookie de sessão acompanha a requisição da imagem, então o PNG protegido
         carrega sem precisar de token na URL.
       -->
       <img class="qr" [src]="urlDoQr()" alt="QR Code do ponto de coleta" data-testid="qr" />
-      <p class="referencia" data-testid="referencia">{{ referencia() }}</p>
+      <p class="referencia-curta" data-testid="referencia-curta">{{ refCurta() }}</p>
     </div>
   } @else if (arquivado()) {
     <p class="dica aviso" data-testid="aviso-arquivado">
       Este local está arquivado e não recebe pontos novos. Reative o local para cadastrar um ponto.
     </p>
   } @else {
-    <div class="explicacao">
-      <p class="dica">
-        O ponto de coleta não tem campos a preencher: ao confirmar, um QR Code exclusivo é gerado
-        para <strong>{{ local()?.nome }}</strong>.
-      </p>
-      <p class="dica">
-        É esse código que o morador escaneia para registrar quantos litros entregou.
-      </p>
+    <div class="formulario">
+      @if (localFixo()) {
+        <!--
+          Local que veio pronto — da ficha do Local, ou da própria estação em correção: some com a
+          busca em vez de deixá-la preenchida e editável. Trocar de local não é o que se está fazendo
+          aqui, e o vínculo é imutável (RN-G-05).
+        -->
+        <div class="campo">
+          <span class="rotulo">Local</span>
+          <p class="local-fixo" data-testid="local-fixo">{{ nomeDoLocal() }}</p>
+        </div>
+      } @else {
+        <div class="campo">
+          <label for="local-do-ponto">Local</label>
+          <!--
+            O campo recebe o nível **deste** painel: é ele que abre o formulário de Local um acima,
+            sem fechar este (FR-043).
+          -->
+          <app-local-autocomplete
+            inputId="local-do-ponto"
+            [local]="localEscolhido()"
+            (localChange)="localEscolhido.set($event)"
+            [nivel]="nivel()"
+          />
+        </div>
+      }
+
+      <div class="campo">
+        <label for="referencia-da-estacao">Referência da estação</label>
+        <input
+          pInputText
+          id="referencia-da-estacao"
+          name="referencia"
+          data-testid="campo-referencia"
+          [attr.maxlength]="maxReferencia"
+          placeholder="Ex.: portaria, bloco B, cantina"
+          [ngModel]="referencia()"
+          (ngModelChange)="referencia.set($event)"
+          fluid
+        />
+        <small class="dica">
+          Onde a estação fica dentro do local. Até {{ maxReferencia }} caracteres.
+        </small>
+      </div>
+
+      @if (edicao()) {
+        <!--
+          Em correção os avisos do cadastro seriam falsos: nenhum QR é gerado e nada há para
+          imprimir de novo. Dizer que o código continua o mesmo evita a dúvida de quem já colou o
+          adesivo na parede.
+        -->
+        <p class="dica" data-testid="qr-inalterado">
+          Só a referência muda. O QR Code continua o mesmo — o adesivo já fixado no local segue
+          valendo.
+        </p>
+      } @else {
+        <!-- FR-022: o QR não é campo a preencher, e dizer isso evita procurá-lo na tela. -->
+        <p class="dica" data-testid="aviso-qr">
+          O QR Code é gerado pelo sistema ao concluir — não há nada a preencher aqui.
+        </p>
+        <!-- FR-023: o cadastro só serve depois que o código está fixado no lugar da entrega. -->
+        <p class="dica" data-testid="orientacao">
+          Depois de concluir, imprima o código e fixe no lugar onde o óleo é entregue.
+        </p>
+      }
     </div>
   }
 
@@ -69,11 +128,11 @@
       <button
         pButton
         type="button"
-        data-testid="criar-ponto"
-        [disabled]="arquivado() || criando() || !local()"
-        (click)="criar()"
+        data-testid="concluir-ponto"
+        [disabled]="concluirDesabilitado()"
+        (click)="concluir()"
       >
-        {{ criando() ? 'Gerando…' : 'Gerar ponto' }}
+        {{ rotuloConcluir() }}
       </button>
     }
   </div>

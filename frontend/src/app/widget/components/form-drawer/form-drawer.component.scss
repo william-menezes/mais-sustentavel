@@ -39,3 +39,17 @@
     width: 100%;
   }
 }
+
+/* Aviso de pendências: informa sem competir com as ações, e some quando não há o que dizer. */
+.pendencia {
+  margin: 0 auto 0 0;
+  font-size: 14px;
+  color: var(--color-slate);
+}
+
+/* Em tela estreita o rodapé empilha, e o aviso vai para cima das ações em vez de ao lado. */
+@media (max-width: 767px) {
+  .pendencia {
+    margin: 0 0 var(--space-xs);
+  }
+}

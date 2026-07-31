@@ -18,8 +18,9 @@ import { Local, LocalRequest, TipoLocal, Uf } from '../../interfaces/local.inter
  * edição (pré-preenche e faz PUT); sem ele, cadastra (POST). Emite `salvo` com o Local resultante
  * para o pai atualizar a listagem.
  *
- * <p>A validação não exibe mensagem por campo: o botão salvar simplesmente fica indisponível até
- * os obrigatórios estarem completos (FR-025). O `erro` é reservado para falha de salvamento.
+ * <p>A validação não exibe mensagem por campo: salvar fica indisponível até os obrigatórios estarem
+ * completos (FR-025) e o rodapé do painel nomeia os que faltam (FR-051). O `erro` é reservado para
+ * falha de salvamento.
  */
 @Component({
   selector: 'app-local-form',
@@ -41,6 +42,14 @@ export class LocalForm {
   readonly visivel = model<boolean>(false);
   /** Local em edição; `null` cadastra um novo. */
   readonly local = input<Local | null>(null);
+  /**
+   * Profundidade na pilha de painéis, repassada ao painel compartilhado. `0` quando o formulário abre
+   * sobre a lista; maior quando abre **sobre outro painel** — é o caso do cadastro de local a partir
+   * do cadastro de estação. Sem repassar, os dois painéis sairiam com a mesma largura e se
+   * sobreporiam exatamente, fazendo o de baixo desaparecer aos olhos de quem precisa voltar a ele
+   * (FR-043, FR-044).
+   */
+  readonly nivel = input(0);
   /** Emitido quando um local é salvo (criado ou editado). */
   readonly salvo = output<Local>();
 
@@ -70,18 +79,44 @@ export class LocalForm {
    */
   protected readonly cep = computed(() => this.cepMascarado().replace(/\D/g, ''));
 
-  /** Salvar só habilita com os obrigatórios completos; complemento fica de fora (FR-002, FR-025). */
-  protected readonly salvarDesabilitado = computed(
-    () =>
-      !this.nome().trim() ||
-      !this.tipo() ||
-      this.cep().length !== 8 ||
-      !this.rua().trim() ||
-      !this.numero().trim() ||
-      !this.bairro().trim() ||
-      !this.cidade().trim() ||
-      !this.uf(),
+  /**
+   * Obrigatórios na ordem em que aparecem no formulário, com o rótulo que o usuário lê no campo —
+   * é por ele que a pessoa vai achar o campo na tela. Complemento fica fora: é o único opcional
+   * (FR-002).
+   */
+  private readonly obrigatorios: readonly { rotulo: string; emBranco: () => boolean }[] = [
+    { rotulo: 'nome', emBranco: () => !this.nome().trim() },
+    { rotulo: 'tipo', emBranco: () => !this.tipo() },
+    { rotulo: 'CEP', emBranco: () => this.cep().length !== 8 },
+    { rotulo: 'rua', emBranco: () => !this.rua().trim() },
+    { rotulo: 'número', emBranco: () => !this.numero().trim() },
+    { rotulo: 'bairro', emBranco: () => !this.bairro().trim() },
+    { rotulo: 'cidade', emBranco: () => !this.cidade().trim() },
+    { rotulo: 'UF', emBranco: () => !this.uf() },
+  ];
+
+  /** Rótulos dos obrigatórios ainda em branco, na ordem do formulário. */
+  private readonly pendentes = computed(() =>
+    this.obrigatorios.filter((campo) => campo.emBranco()).map((campo) => campo.rotulo),
   );
+
+  /**
+   * Salvar só habilita com os obrigatórios completos (FR-025).
+   *
+   * <p>Derivado da mesma lista que monta o aviso para que os dois não possam divergir: o aviso
+   * desaparece exatamente quando salvar fica disponível (FR-050).
+   */
+  protected readonly salvarDesabilitado = computed(() => this.pendentes().length > 0);
+
+  /**
+   * Nomeia no rodapé do painel os obrigatórios que faltam, em vez de só desabilitar salvar
+   * (FR-051). Revisa a decisão da 006 — pedido do Gestor, para este formulário e o de estação não
+   * divergirem.
+   */
+  protected readonly pendencia = computed(() => {
+    const faltando = this.pendentes();
+    return faltando.length ? `Falta preencher: ${faltando.join(', ')}.` : '';
+  });
 
   protected readonly titulo = computed(() => (this.local() ? 'Editar local' : 'Novo local'));
 

@@ -27,6 +27,14 @@
 
   <ng-template #footer>
     <!--
+      O aviso de pendências vem ANTES do slot de ações, e não dentro do conteúdo de reserva: assim
+      vale também para quem projeta rodapé próprio (a ficha, o painel de ponto). Dentro da reserva,
+      só quem usa Cancelar/Salvar o teria.
+    -->
+    @if (pendencia()) {
+      <p class="pendencia" data-testid="pendencia">{{ pendencia() }}</p>
+    }
+    <!--
       Rodapé projetável com conteúdo de reserva: sem um `<div acoes>` do hospedeiro valem os botões
       de formulário abaixo — é o que mantém o local-form funcionando sem mudar uma linha.
     -->
