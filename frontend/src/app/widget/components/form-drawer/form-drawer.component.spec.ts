@@ -17,6 +17,7 @@ import { FormDrawer } from './form-drawer.component';
       [trilha]="[{ label: 'Home' }, { label: 'Locais' }, { label: 'Novo' }]"
       [salvarDesabilitado]="desabilitado()"
       [closable]="fechavel()"
+      [nivel]="nivel()"
       (salvar)="salvou = salvou + 1"
       (cancelar)="cancelou = cancelou + 1"
     >
@@ -28,6 +29,7 @@ class Hospedeiro {
   visivel = signal(true);
   desabilitado = signal(false);
   fechavel = signal(false);
+  nivel = signal(0);
   salvou = 0;
   cancelou = 0;
 }
@@ -169,6 +171,52 @@ describe('FormDrawer', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="acao-propria"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="cancelar"]')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('[data-testid="salvar"]')).toBeFalsy();
+  });
+
+  // ---------- recuo do empilhamento ----------
+
+  function dimensaoDe(fixture: ReturnType<typeof configurar>): Record<string, string> {
+    const painel = fixture.debugElement.children[0].componentInstance as unknown as {
+      dimensao: () => Record<string, string>;
+    };
+    return painel.dimensao();
+  }
+
+  it('ocupa a largura cheia no painel de base', () => {
+    const fixture = configurar(true);
+
+    expect(dimensaoDe(fixture)['width']).toBe('34rem');
+  });
+
+  it('recua a largura no painel empilhado, revelando o de baixo', () => {
+    // Ancorado à direita: encolher é o que faz aparecer a borda esquerda do painel de baixo.
+    // Deslocar abriria uma fresta contra a borda da tela e pareceria painel mal posicionado.
+    const fixture = configurar(true);
+
+    fixture.componentInstance.nivel.set(1);
+    fixture.detectChanges();
+
+    expect(dimensaoDe(fixture)['width']).toBe('32.5rem');
+  });
+
+  it('acumula o recuo a cada nível da pilha', () => {
+    const fixture = configurar(true);
+
+    fixture.componentInstance.nivel.set(2);
+    fixture.detectChanges();
+
+    expect(dimensaoDe(fixture)['width']).toBe('31rem');
+  });
+
+  it('recua a altura em tela estreita, onde o painel sobe de baixo', () => {
+    const fixture = configurar(false);
+    expect(dimensaoDe(fixture)['max-height']).toBe('92dvh');
+
+    fixture.componentInstance.nivel.set(1);
+    fixture.detectChanges();
+
+    // `calc` porque dvh e rem não se somam fora dele; o topo do painel de baixo é o que aparece.
+    expect(dimensaoDe(fixture)['max-height']).toBe('calc(92dvh - 1.5rem)');
   });
 
   // Cabeçalho e rodapé fixos enquanto o corpo rola é propriedade de layout: depende de altura

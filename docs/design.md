@@ -412,6 +412,12 @@ para o padrão inteiro:
 - **O empilhamento não precisa de configuração.** O `ZIndexUtils` do PrimeNG mantém uma pilha e
   incrementa a camada a cada painel modal (1101, depois 1102), então o de cima aparece acima sem
   `baseZIndex` na mão.
+- **Cada nível recua 1,5 rem**, pelo input `nivel` do `form-drawer` (`0` é o painel de base). Dois
+  painéis do mesmo tamanho se sobrepõem exatamente e parecem um só — o de baixo desaparece aos olhos
+  de quem precisa saber que há algo atrás para voltar. O recuo é **encolhimento, não deslocamento**:
+  o painel é ancorado numa borda, então diminuí-lo revela o de baixo do lado oposto à âncora,
+  enquanto deslocá-lo abriria uma fresta contra a borda da tela e pareceria erro de posicionamento.
+  À direita encolhe a largura; embaixo, a altura.
 - **Declare o painel de cima fora do de baixo.** Dentro do `app-form-drawer`, ele seria projetado no
   corpo do primeiro painel e rolaria junto com o conteúdo, em vez de ser uma camada própria.
 - **Quem hospeda o painel de cima é quem mostra a lista afetada**, não a página. A ficha do Local
