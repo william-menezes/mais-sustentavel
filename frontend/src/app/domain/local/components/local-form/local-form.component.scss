@@ -1,21 +1,54 @@
-.local-form {
+.campo {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding-top: 0.25rem;
+  gap: var(--space-xxs);
+  min-width: 0;
+}
 
-  .campo {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+.campo label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
 
-    label {
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
+.opcional {
+  font-weight: 400;
+  color: var(--color-slate);
+}
+
+.dica {
+  font-size: 12px;
+  color: var(--color-slate);
+}
+
+.dica.aviso {
+  color: var(--color-amber, #9a6b00);
+}
+
+.secao {
+  margin: var(--space-xs) 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+
+/* Empilhado por padrão; dois campos por linha a partir do breakpoint do design system, para o
+   formulário seguir utilizável sem rolagem horizontal em telas estreitas (SC-008). */
+.par {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .par {
+    grid-template-columns: 1fr 1fr;
   }
 
-  ::ng-deep .form-erro {
-    width: 100%;
+  /* Rua/número e cidade/UF são desproporcionais: o segundo campo é curto. */
+  .par:has(> .estreito) {
+    grid-template-columns: 2fr 1fr;
   }
 }

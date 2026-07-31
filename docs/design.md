@@ -362,6 +362,106 @@ The system runs predominantly flat. Elevation is reserved for sticky panels, dro
 - Feature tile illustrations are SVG-based; remain crisp at all breakpoints.
 - Avatar imagery in testimonials/rankings uses 1:1 aspect ratio with `{rounded.full}` masking.
 
+## Padrões de telas administrativas (pt-BR)
+
+> Estabelecidos na feature `006-endereco-estruturado-locais`, na tela de Locais. **Pontos de coleta
+> e Coletas devem reaproveitá-los** em vez de reinventar — é o que mantém as telas coerentes.
+
+### 1. Filtro por coluna com menu de funil
+
+Toda tabela de dados usa `p-table` com `filterDisplay="menu"` e um `p-column-filter` por coluna,
+com o operador de comparação visível ao usuário:
+
+| Tipo de dado | Filtro |
+|---|---|
+| Texto (nome) | `type="text"` — contém, começa com, igual |
+| Numérico (litros) | `type="numeric"` — maior que, menor que, entre |
+| Lista fechada (tipo, situação) | `matchMode="equals"` com `p-select` no template `#filter` |
+
+Cuidado ao consultar a documentação: os demos do PrimeNG chamados `filterbasic` e `filter-advanced`
+usam `[showMenu]="false"`, que é o estilo **de linha** — o oposto do adotado aqui. A escolha do menu
+é decisão de produto.
+
+Quando um filtro não retorna nada, a mensagem é **distinta** da de lista sem cadastro, e traz a
+saída ("Limpar filtros"). Confundir as duas faz o Gestor achar que perdeu dados.
+
+### 2. Painel de cadastro sobreposto
+
+Cadastro e edição usam `app-form-drawer` (`widget/components/form-drawer`), nunca uma janela modal
+centralizada nem navegação para outra tela:
+
+- posição **direita** a partir de 768 px, **de baixo para cima** abaixo disso — o breakpoint é o
+  mesmo da tabela acima, via `ViewportService`
+- **cabeçalho e rodapé fixos**: trilha de navegação e título no topo, ações embaixo, só o corpo rola
+- o botão salvar fica **indisponível** enquanto houver campo obrigatório em branco; sem mensagem
+  por campo e sem lista de pendências no rodapé
+- o painel não conhece domínio: o formulário entra por `<ng-content>` e o pai decide quando salvar
+  está disponível
+
+### 3. Campo relacional com criação sobreposta
+
+Campo que aponta para outro registro (o Local de um Ponto, o Ponto de uma Coleta) usa autocomplete
+buscando no backend. Quando a busca não casa com nada, o estado vazio oferece **"+ adicionar"**, que
+abre um **segundo painel sobre o primeiro**, sem fechá-lo. Ao salvar, o registro criado volta já
+selecionado no campo e o painel de cima fecha.
+
+**Painel sobre painel já está exercitado**, ainda que sem autocomplete: "Novo ponto" na ficha do
+Local abre o cadastro de ponto empilhado, e a ficha permanece aberta atrás. O que aprendemos ali vale
+para o padrão inteiro:
+
+- **O empilhamento não precisa de configuração.** O `ZIndexUtils` do PrimeNG mantém uma pilha e
+  incrementa a camada a cada painel modal (1101, depois 1102), então o de cima aparece acima sem
+  `baseZIndex` na mão.
+- **Cada nível recua 1,5 rem**, pelo input `nivel` do `form-drawer` (`0` é o painel de base). Dois
+  painéis do mesmo tamanho se sobrepõem exatamente e parecem um só — o de baixo desaparece aos olhos
+  de quem precisa saber que há algo atrás para voltar. O recuo é **encolhimento, não deslocamento**:
+  o painel é ancorado numa borda, então diminuí-lo revela o de baixo do lado oposto à âncora,
+  enquanto deslocá-lo abriria uma fresta contra a borda da tela e pareceria erro de posicionamento.
+  À direita encolhe a largura; embaixo, a altura.
+- **Declare o painel de cima fora do de baixo.** Dentro do `app-form-drawer`, ele seria projetado no
+  corpo do primeiro painel e rolaria junto com o conteúdo, em vez de ser uma camada própria.
+- **Quem hospeda o painel de cima é quem mostra a lista afetada**, não a página. A ficha do Local
+  hospeda o cadastro de ponto porque é ela que exibe os pontos e precisa recarregá-los ao final.
+- **Empilhar em vez de fechar é uma escolha por ação.** Editar e arquivar fecham a ficha, porque o
+  dado exibido nela muda e ficaria velho atrás do formulário. Criar um filho não muda o pai: o
+  usuário volta para a mesma ficha, agora com o item novo na lista.
+
+> O que continua **não exercitado** é a parte do **autocomplete**: nenhuma tela ainda tem campo que
+> aponta para outro registro. Local não tem, e o cadastro de Ponto não tem campo nenhum. A primeira
+> aplicação de "buscar, não achar, + adicionar" será a tela de Coletas.
+
+### Orçamento de bundle
+
+O aviso de bundle inicial está em **560 kB** (erro em 1 MB), acima dos 500 kB originais. A elevação
+foi deliberada: cada tela nova traz módulos do PrimeNG cuja infraestrutura compartilhada é içada
+para o entry comum, e o `main` cresce sem que código de tela seja carregado antecipadamente. Na
+feature 006 isso foi conferido por inspeção do bundle — drawer, máscara, filtros e consulta de CEP
+ficaram todos no chunk lazy da página.
+
+O número que importa para o usuário é a **transferência**: ~122 kB comprimidos no carregamento
+inicial. O erro em 1 MB segue como guarda real contra carregar um domínio inteiro por engano.
+
+### Rótulos internos do PrimeNG
+
+Boa parte do texto que aparece na tela **não sai dos nossos templates**: os modos de comparação do
+menu de filtro ("Contém", "Maior que"), os botões Limpar e Aplicar, "Nenhum resultado encontrado",
+nomes de mês e os rótulos de acessibilidade são gerados pela biblioteca. Todos vêm de um único lugar:
+`core/i18n/pt-br/pt-br.translation.ts`, aplicado no `providePrimeNG` do `app.config.ts`.
+
+**Não traduza esses rótulos no template.** Passar `emptyMessage="…"` ou `[showClear]` com texto
+próprio em cada tela é como a divergência começa — o mesmo conceito ganha três redações. Se um termo
+da biblioteca aparecer em inglês, a correção é no arquivo de tradução, e vale para o app inteiro.
+
+Duas armadilhas registradas junto do arquivo, porque nenhuma das duas dá sinal na tela:
+
+- o merge do PrimeNG é de **um nível só**, então um objeto `aria` parcial substitui o da biblioteca
+  por inteiro e transforma os rótulos ausentes em `undefined` para leitores de tela;
+- `searchMessage` e `selectionMessage` passam por `replaceAll('{0}', …)` — remover o marcador não
+  quebra nada visivelmente, só deixa de anunciar o número.
+
+O `pt-br.translation.spec.ts` compara o arquivo com o padrão da **versão instalada** do PrimeNG: uma
+atualização que acrescente rótulo falha o teste nomeando a chave, em vez de deixá-la vazar em inglês.
+
 ## Iteration Guide
 
 1. Focus on ONE component at a time. The system has high internal consistency.

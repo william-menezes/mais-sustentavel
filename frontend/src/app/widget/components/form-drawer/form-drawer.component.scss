@@ -1,0 +1,41 @@
+.cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+  min-width: 0;
+}
+
+.cabecalho h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+/* O corpo é a única região que rola: cabeçalho e rodapé são slots próprios do painel. */
+.corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-block: var(--space-xs);
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+/* Em tela estreita o painel ocupa a largura toda: as ações viram empilháveis e de toque fácil. */
+@media (max-width: 767px) {
+  .acoes {
+    flex-direction: column-reverse;
+  }
+
+  .acoes button {
+    width: 100%;
+  }
+}

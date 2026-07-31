@@ -1,6 +1,7 @@
 package br.com.maissustentavel.api.ponto;
 
 import br.com.maissustentavel.api.TestcontainersConfiguration;
+import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
@@ -53,7 +54,7 @@ class PontoControllerTest {
     private UUID local(boolean arquivado) {
         Local l = new Local();
         l.setNome(arquivado ? "Arquivado" : "Ativo");
-        l.setEndereco("Rua X, 1");
+        LocalFixture.comEnderecoValido(l);
         l.setTipo(TipoLocal.ESCOLA);
         l.setArquivado(arquivado);
         return localRepository.saveAndFlush(l).getId();
