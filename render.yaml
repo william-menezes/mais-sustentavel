@@ -24,3 +24,16 @@ services:
         sync: false
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
+      # Gestor inicial (AC-01). O GestorSeeder só semeia quando as DUAS existirem;
+      # sem elas o banco sobe sem nenhuma conta e não há como fazer login. É
+      # idempotente: depois de criado, novos deploys não recriam nem sobrescrevem.
+      - key: SEED_GESTOR_EMAIL
+        sync: false
+      - key: SEED_GESTOR_SENHA
+        sync: false
+      # CA-02: base da URL gravada em ponto.qr_conteudo no momento da criação.
+      # Defina o domínio do frontend na Vercel ANTES de cadastrar qualquer ponto: o
+      # valor fica persistido por ponto, e o QR impresso continua apontando para ele.
+      # Sem esta variável, cai no default http://localhost:4200.
+      - key: APP_PONTO_BASE_URL
+        sync: false

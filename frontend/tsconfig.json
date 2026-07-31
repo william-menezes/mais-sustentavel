@@ -3,6 +3,17 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    /* Aliases por camada da arquitetura: evitam '../../..' e tornam explícita a
+       camada de origem de cada import (core, domain, shared, widget, environments).
+       Sem 'baseUrl' (depreciado no TS 6): os caminhos são resolvidos em relação a
+       este arquivo. */
+    "paths": {
+      "@core/*": ["./src/app/core/*"],
+      "@domain/*": ["./src/app/domain/*"],
+      "@shared/*": ["./src/app/shared/*"],
+      "@widget/*": ["./src/app/widget/*"],
+      "@env/*": ["./src/environments/*"]
+    },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,

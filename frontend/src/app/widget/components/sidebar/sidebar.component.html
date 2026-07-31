@@ -1,0 +1,55 @@
+<aside class="sidebar">
+  <a class="marca" routerLink="/painel">
+    <img src="/logo.png" alt="" class="marca-logo" />
+    <span class="marca-nome">Sustentável</span>
+  </a>
+
+  <nav class="nav" aria-label="Navegação principal">
+    @for (grupo of grupos(); track grupo.titulo) {
+      <div class="grupo">
+        <p class="grupo-titulo">{{ grupo.titulo }}</p>
+        <ul class="grupo-itens">
+          @for (item of grupo.itens; track item.link) {
+            <li>
+              <a
+                class="item"
+                [routerLink]="item.link"
+                routerLinkActive="item--ativo"
+                [routerLinkActiveOptions]="{ exact: exato(item.link) }"
+              >
+                <span class="item-label">{{ item.label }}</span>
+                @if (item.contador !== undefined) {
+                  <span class="item-contador">{{ item.contador }}</span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </nav>
+
+  <div class="rodape">
+    <section class="meta" aria-label="Meta do mês">
+      <p class="meta-titulo">Meta de {{ metaMes() }}</p>
+      <p class="meta-valores">{{ formatar(metaAtual()) }} L de {{ formatar(metaTotal()) }} L</p>
+      <div
+        class="meta-barra"
+        role="progressbar"
+        [attr.aria-valuenow]="metaAtual()"
+        [attr.aria-valuemin]="0"
+        [attr.aria-valuemax]="metaTotal()"
+      >
+        <span class="meta-barra-preenchida" [style.width.%]="metaPct()"></span>
+      </div>
+    </section>
+
+    <div class="usuario">
+      <span class="usuario-avatar" aria-hidden="true">{{ iniciais() }}</span>
+      <div class="usuario-info">
+        <p class="usuario-nome">{{ usuarioNome() }}</p>
+        <p class="usuario-papel">{{ usuarioPapel() }}</p>
+      </div>
+    </div>
+  </div>
+</aside>
