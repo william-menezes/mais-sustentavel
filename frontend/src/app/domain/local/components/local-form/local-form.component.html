@@ -55,6 +55,14 @@
       (ngModelChange)="cepMascarado.set($event)"
       fluid
     />
+    @if (consultandoCep()) {
+      <small class="dica">Buscando endereço…</small>
+    } @else if (avisoCep()) {
+      <!-- Aviso, não erro: a consulta é conveniência e nunca impede o cadastro (FR-013). -->
+      <small class="dica aviso" data-testid="aviso-cep">{{ avisoCep() }}</small>
+    } @else {
+      <small class="dica">Informe o CEP para preencher rua, bairro, cidade e UF.</small>
+    }
   </div>
 
   <div class="par">

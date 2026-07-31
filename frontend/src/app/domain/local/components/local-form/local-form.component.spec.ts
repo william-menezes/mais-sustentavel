@@ -7,8 +7,17 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { LocalForm } from './local-form.component';
+import { CepService, ResultadoCep } from '../../apis/cep.api';
 import { LocalService } from '../../apis/local.api';
 import { Local, LocalRequest, TipoLocal, Uf } from '../../interfaces/local.interface';
+
+const CEP_ENCONTRADO: ResultadoCep = {
+  situacao: 'encontrado',
+  rua: 'Avenida João Naves de Ávila',
+  bairro: 'Saraiva',
+  cidade: 'Uberlândia',
+  uf: 'MG',
+};
 
 /** Superfície interna que o teste manipula — os signals são protegidos no componente. */
 interface Interno {
@@ -25,6 +34,7 @@ interface Interno {
   salvarDesabilitado: () => boolean;
   titulo: () => string;
   erro: () => string | null;
+  avisoCep: () => string | null;
   visivel: () => boolean;
   salvo: { subscribe: (fn: (local: Local) => void) => void };
   salvar: () => void;
@@ -60,15 +70,18 @@ const MIGRADO: Local = {
 
 describe('LocalForm', () => {
   let servicoFake: { criar: ReturnType<typeof vi.fn>; editar: ReturnType<typeof vi.fn> };
+  let cepFake: { consultar: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     servicoFake = { criar: vi.fn(), editar: vi.fn() };
+    cepFake = { consultar: vi.fn().mockReturnValue(of(CEP_ENCONTRADO)) };
     await TestBed.configureTestingModule({
       imports: [LocalForm],
       providers: [
         provideAnimationsAsync(),
         providePrimeNG({ theme: { preset: Aura } }),
         { provide: LocalService, useValue: servicoFake },
+        { provide: CepService, useValue: cepFake },
       ],
     }).compileComponents();
   });
@@ -219,6 +232,105 @@ describe('LocalForm', () => {
     expect(comp.rua()).toBe('Rua das Flores, 100 - Centro');
     expect(comp.cepMascarado()).toBe('');
     expect(comp.salvarDesabilitado()).toBe(true);
+  });
+
+  // ---------- US3: autopreenchimento por CEP ----------
+
+  it('consulta o CEP completo e preenche rua, bairro, cidade e UF', () => {
+    const { fixture, comp } = abrir();
+
+    comp.cepMascarado.set('38408-100');
+    fixture.detectChanges();
+
+    expect(cepFake.consultar).toHaveBeenCalledWith('38408100');
+    expect(comp.rua()).toBe('Avenida João Naves de Ávila');
+    expect(comp.bairro()).toBe('Saraiva');
+    expect(comp.cidade()).toBe('Uberlândia');
+    expect(comp.uf()).toBe('MG');
+    expect(comp.avisoCep()).toBeNull();
+  });
+
+  it('não consulta com CEP incompleto', () => {
+    const { fixture, comp } = abrir();
+
+    comp.cepMascarado.set('384');
+    fixture.detectChanges();
+
+    expect(cepFake.consultar).not.toHaveBeenCalled();
+  });
+
+  it('preserva a correção manual da rua sobre o valor consultado', () => {
+    const { fixture, comp } = abrir();
+    servicoFake.criar.mockReturnValue(of(EXISTENTE));
+
+    comp.cepMascarado.set('38408-100');
+    fixture.detectChanges();
+    comp.rua.set('Avenida João Naves de Ávila (fundos)');
+    comp.nome.set('Escola A');
+    comp.tipo.set('ESCOLA');
+    comp.numero.set('1841');
+    comp.salvar();
+
+    expect(servicoFake.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ rua: 'Avenida João Naves de Ávila (fundos)' }),
+    );
+  });
+
+  it('avisa quando o CEP não é encontrado, sem bloquear o cadastro', () => {
+    const { fixture, comp } = abrir();
+    cepFake.consultar.mockReturnValue(of({ situacao: 'nao-encontrado' } as ResultadoCep));
+
+    comp.cepMascarado.set('99999-999');
+    fixture.detectChanges();
+
+    expect(comp.avisoCep()).toContain('não encontrado');
+    // Os campos seguem vazios e editáveis: o Gestor preenche à mão.
+    expect(comp.rua()).toBe('');
+  });
+
+  it('avisa quando a consulta está indisponível, sem bloquear o cadastro', () => {
+    const { fixture, comp } = abrir();
+    cepFake.consultar.mockReturnValue(of({ situacao: 'indisponivel' } as ResultadoCep));
+
+    comp.cepMascarado.set('38408-100');
+    fixture.detectChanges();
+    // Completa manualmente e confirma que salvar libera mesmo com a consulta fora do ar (FR-013).
+    comp.nome.set('Escola A');
+    comp.tipo.set('ESCOLA');
+    comp.rua.set('Avenida João Naves de Ávila');
+    comp.numero.set('1841');
+    comp.bairro.set('Saraiva');
+    comp.cidade.set('Uberlândia');
+    comp.uf.set('MG');
+
+    expect(comp.avisoCep()).toBeTruthy();
+    expect(comp.salvarDesabilitado()).toBe(false);
+  });
+
+  it('reconsulta ao trocar o CEP por outro válido', () => {
+    const { fixture, comp } = abrir();
+
+    comp.cepMascarado.set('38408-100');
+    fixture.detectChanges();
+    cepFake.consultar.mockReturnValue(
+      of({ situacao: 'encontrado', rua: 'Avenida Paulista', bairro: 'Bela Vista', cidade: 'São Paulo', uf: 'SP' } as ResultadoCep),
+    );
+    comp.cepMascarado.set('01310-930');
+    fixture.detectChanges();
+
+    expect(cepFake.consultar).toHaveBeenCalledTimes(2);
+    expect(comp.cidade()).toBe('São Paulo');
+    expect(comp.uf()).toBe('SP');
+  });
+
+  it('não consulta o CEP ao abrir em edição, preservando o endereço salvo', () => {
+    // Consultar aqui sobrescreveria com a versão canônica do provedor um endereço que o Gestor
+    // pode ter corrigido à mão — perda silenciosa de dado.
+    const { fixture, comp } = abrir(EXISTENTE);
+    fixture.detectChanges();
+
+    expect(cepFake.consultar).not.toHaveBeenCalled();
+    expect(comp.rua()).toBe('Avenida João Naves de Ávila');
   });
 
   it('avisa quando o salvamento falha e mantém o painel aberto', () => {

@@ -7,6 +7,7 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 
 import { FormDrawer } from '@widget/components/form-drawer/form-drawer.component';
+import { CepService } from '../../apis/cep.api';
 import { LocalService } from '../../apis/local.api';
 import { TIPOS_LOCAL } from '../../constants/tipo-local.constant';
 import { UFS } from '../../constants/uf.constant';
@@ -28,6 +29,13 @@ import { Local, LocalRequest, TipoLocal, Uf } from '../../interfaces/local.inter
 })
 export class LocalForm {
   private readonly service = inject(LocalService);
+  private readonly cepApi = inject(CepService);
+
+  /**
+   * Último CEP para o qual a consulta já foi resolvida. Guardado como campo simples, não signal,
+   * porque só serve para evitar reconsulta — não deve provocar recálculo de nada.
+   */
+  private ultimoCepConsultado = '';
 
   /** Visibilidade do painel (two-way com o pai). */
   readonly visivel = model<boolean>(false);
@@ -51,6 +59,9 @@ export class LocalForm {
   protected readonly uf = signal<Uf | null>(null);
   protected readonly erro = signal<string | null>(null);
   protected readonly salvando = signal(false);
+  /** Aviso da consulta de CEP (não encontrado ou indisponível). Nunca impede o cadastro. */
+  protected readonly avisoCep = signal<string | null>(null);
+  protected readonly consultandoCep = signal(false);
 
   /**
    * Oito dígitos, derivados do valor com máscara. Derivar em vez de consumir `onUnmaskedChange`
@@ -99,6 +110,48 @@ export class LocalForm {
         this.cidade.set(alvo?.cidade ?? '');
         this.uf.set(alvo?.uf ?? null);
         this.erro.set(null);
+        this.avisoCep.set(null);
+        // Marca o CEP carregado como já resolvido: abrir em edição não deve disparar consulta e
+        // sobrescrever com a versão do provedor um endereço que o Gestor pode ter corrigido.
+        this.ultimoCepConsultado = alvo?.cep ?? '';
+      }
+    });
+
+    // Consulta quando o CEP fica completo e é diferente do último já resolvido (FR-010, FR-014).
+    effect(() => {
+      const cep = this.cep();
+      if (cep.length !== 8 || cep === this.ultimoCepConsultado) {
+        return;
+      }
+      this.ultimoCepConsultado = cep;
+      this.consultarCep(cep);
+    });
+  }
+
+  private consultarCep(cep: string): void {
+    this.avisoCep.set(null);
+    this.consultandoCep.set(true);
+
+    this.cepApi.consultar(cep).subscribe((resultado) => {
+      this.consultandoCep.set(false);
+
+      switch (resultado.situacao) {
+        case 'encontrado':
+          this.rua.set(resultado.rua);
+          this.bairro.set(resultado.bairro);
+          this.cidade.set(resultado.cidade);
+          if (resultado.uf) {
+            this.uf.set(resultado.uf);
+          }
+          break;
+        case 'nao-encontrado':
+          this.avisoCep.set('CEP não encontrado. Preencha o endereço manualmente.');
+          break;
+        case 'indisponivel':
+          this.avisoCep.set(
+            'Não foi possível consultar o CEP agora. Preencha o endereço manualmente.',
+          );
+          break;
       }
     });
   }
