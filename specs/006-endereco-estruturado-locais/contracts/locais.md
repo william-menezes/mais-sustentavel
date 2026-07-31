@@ -122,3 +122,19 @@ O ViaCEP é chamado **pelo navegador**, não pela API (D3) — não faz parte de
 ## Reutilizado sem alteração
 
 `GET /api/impacto/valor-social/por-local`, entregue na IS-01, alimenta a coluna Litros. Contrato em [`005-valor-social/contracts/impacto.md`](../../005-valor-social/contracts/impacto.md). Esta feature apenas o consome — nada nele muda.
+
+---
+
+## A ficha do local (US5) não muda o contrato
+
+A ficha somente leitura de um Local é composta inteiramente de endpoints **que já existem**:
+
+| O que a ficha mostra | De onde vem |
+|---|---|
+| Nome, tipo, situação e endereço completo | `GET /api/locais/{id}` (ou o `LocalResponse` já carregado na lista) |
+| Lista e quantidade de pontos de coleta | `GET /api/locais/{id}/pontos` (CA-02) |
+| Litros acumulados e valor social | `GET /api/impacto/valor-social/por-local` (IS-01), o mesmo agregado já consultado para a coluna Litros — a ficha reaproveita o resultado, sem chamada nova |
+
+Nenhum endpoint novo, nenhum campo novo, nenhuma mudança de status. Se algum dia a ficha precisar de um endpoint próprio, será por decisão de desempenho, não por falta de dado.
+
+> **O agregado por ponto não existe.** O desenho de referência exibia, em cada ponto, litros e data da última coleta ("614 L · coleta 11/07"). Não há endpoint que devolva isso por ponto, e derivá-lo hoje custaria uma requisição por ponto (N+1). O dado pertence à história **VH-02** ("ver o volume por ponto") e o endpoint correspondente será definido no contrato dela. Até então, a ficha lista os pontos sem métrica própria.

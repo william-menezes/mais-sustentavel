@@ -90,6 +90,21 @@ O caso de indisponibilidade é o mais importante: **a FR-013 exige que nenhum ca
 3. Em 360 px de largura, o formulário é utilizável **sem rolagem horizontal**.
 4. Preencher campos e **Cancelar** → nada é salvo e a lista fica como estava.
 
+### 5. Ficha do local (US5)
+
+1. No menu de ações de uma linha, **Ver detalhes** é o **primeiro** item → o painel abre sobre a lista, **somente leitura**, e a lista continua visível atrás.
+2. Conferir o cabeçalho: **nome, tipo e situação** do local escolhido.
+3. Conferir os **três indicadores**: litros acumulados, valor social em reais e quantidade de pontos de coleta.
+4. Local com endereço completo → o **endereço inteiro** aparece numa única leitura, inclusive o complemento.
+5. Local **migrado** do modelo antigo (`endereco_legado is not null and cep is null`) → só a rua aparece, **sem vírgula nem travessão solto** e sem campo em branco.
+6. Local **sem pontos** → quantidade `0` e mensagem própria de que ainda não há pontos, com o caminho para cadastrar o primeiro.
+7. Com o backend de impacto derrubado (ou a chamada bloqueada no DevTools) → litros e valor social mostram **`—`**, nunca `0`, e o resto da ficha segue utilizável.
+8. Bloquear a chamada de pontos no DevTools → aviso de falha **apenas** na lista de pontos; identificação, indicadores e endereço continuam visíveis.
+9. Rodapé: **Editar** abre o formulário do local; **Arquivar/Reativar** dispara o fluxo já existente; **Novo ponto** leva ao cadastro de ponto.
+10. **Fechar** o painel → fecha sem pedir confirmação e a lista fica exatamente como estava.
+
+**O que a ficha deliberadamente não mostra** (fora de escopo, ver spec): nome próprio de cada ponto, litros e data da última coleta por ponto (**VH-02**), e mapa — a área de mapa é espaço reservado declarado (**LP-01d**).
+
 ---
 
 ## Verificações de contrato pela API
@@ -113,12 +128,14 @@ curl -X POST http://localhost:8080/api/locais \
 
 A validação precisa reprovar **no servidor** mesmo quando a interface já reprovaria (FR-009) — por isso a checagem por `curl`, contornando o formulário, faz parte do roteiro.
 
+> **Comportamento conhecido, não é defeito**: `uf` fora da lista responde **400 sem o mapa `campos`**, porque falha na desserialização do enum antes do Bean Validation — igual ao que `tipo` já faz desde a CA-01. Mensagem menos específica que a do CEP, mas consistente com o contrato existente. Registrado no T047.
+
 ---
 
 ## Critérios de conclusão
 
 - [ ] `mvn verify` verde no Docker e `npm test` verde
-- [ ] Roteiros 1 a 4 executados no navegador
+- [ ] Roteiros 1 a 5 executados no navegador
 - [ ] Verificações de contrato por `curl` respondendo os status esperados
 - [ ] Migração V6 conferida numa base **com** dados e numa base **vazia**
 - [ ] CI verde antes de qualquer merge (Art. 5.5)

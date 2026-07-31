@@ -100,6 +100,12 @@ O campo `complemento` do ViaCEP **não** é aproveitado: ele traz faixa de numer
 
 A distinção importa: exibir `0 L` quando o serviço de impacto caiu diria ao Gestor que o local não opera, o que é falso. A lista de locais renderiza normalmente nesse cenário — a falha do impacto degrada uma coluna, não a tela.
 
+> **Detalhe do agregado que vale registrar.** A consulta da IS-01 termina em
+> `having l.arquivado = false or coalesce(sum(c.litrosReais), 0) > 0` — ou seja, **local arquivado
+> sem nenhuma coleta não aparece no agregado**. Ele cai no primeiro estado da tabela e exibe `0 L`,
+> o que é correto: o agregado respondeu, e o local de fato não tem coleta. Não confundir com o
+> terceiro estado, que é a chamada ter falhado.
+
 ---
 
 ## D7 — Carregar ativos e arquivados
@@ -148,6 +154,47 @@ Atenção ao `autoClear`, que por padrão **limpa o valor quando a máscara est�
 **Decisão**: a API recebe e devolve o CEP como **oito dígitos sem formatação** (`"38408100"`), validado por `@Pattern("\\d{8}")`. A formatação é responsabilidade da interface.
 
 **Racional**: um único formato canônico no armazenamento elimina a pergunta "com ou sem hífen?" em toda comparação, ordenação e futura deduplicação de endereço. A máscara do D9 já entrega o valor cru sem trabalho extra.
+
+---
+
+## D11 — Ficha do local (US5)
+
+**Decisão**: reaproveitar o `form-drawer` em vez de criar um painel novo, com a ficha consumindo
+apenas dados que a lista já carregou mais uma chamada aos pontos do local.
+
+> Esta decisão foi tomada **depois** do gate `/speckit-analyze`, junto com a US5. As decisões D1 a
+> D10 antecedem a história e não a cobrem.
+
+**Três escolhas dentro dela:**
+
+**1. Generalizar, não duplicar.** O `form-drawer` recebe um input `closable` e passa a aceitar
+rodapé projetado, com *fallback* para os botões Cancelar/Salvar de hoje. Duplicar o invólucro num
+`detalhe-drawer` deixaria a posição responsiva, o cabeçalho fixo e o comportamento de rolagem em
+dois lugares — e a próxima mudança de breakpoint teria de acertar os dois.
+
+**2. A ficha fecha pelo X; o formulário não.** Parece incoerência e é deliberado: num formulário
+preenchido, clique acidental na máscara ou num X solto perde trabalho, e por isso a saída é só pelo
+Cancelar. Numa ficha somente leitura não há nada a perder, e prender o usuário seria hostil.
+
+**3. Nenhuma chamada nova para o local nem para o impacto.** A lista já consulta
+`valor-social/por-local`, e o endpoint devolve `litrosReais` **e** `valorSocial` na mesma resposta —
+o mapa da página passa a guardar os dois. Só os pontos exigem requisição (uma, no momento em que a
+ficha abre). Alternativa rejeitada: a ficha consultar tudo de novo ao abrir, que refaria trabalho já
+feito e piscaria dados na tela.
+
+**Formatação de endereço tolerante a ausências.** Locais migrados do modelo antigo têm só `rua`
+preenchida (D1). O formatador filtra os componentes vazios antes de juntar, para o resultado nunca
+terminar em vírgula nem em travessão solto. É a mesma regra do resumo na coluna Local, agora
+aplicada ao endereço completo.
+
+**O que o desenho de referência pedia e não foi construído** — e o motivo, para não parecer
+esquecimento:
+
+| Elemento | Por que ficou fora |
+|---|---|
+| Nome próprio do ponto ("Bloco B · garagem") | A entidade `Ponto` não tem campo de nome. Exigiria migração de schema no meio de uma feature já fechada — exatamente o que o fluxo Spec-Driven existe para evitar. Os pontos aparecem pelo id abreviado |
+| Litros e data da última coleta por ponto ("614 L · coleta 11/07") | Não existe agregado por ponto: o `ImpactoRepository` agrega por local e por mês. Derivar isso hoje custaria uma requisição por ponto (N+1). É a história **VH-02** do backlog |
+| Mapa do local | Espaço reservado declarado. Geocodificação e mapa pertencem à **LP-01d** |
 
 ---
 

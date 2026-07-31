@@ -104,19 +104,24 @@ frontend/src/app/
 │   ├── apis/cep.api.ts                      # NOVO — ViaCEP, sem credenciais
 │   ├── interfaces/local.interface.ts        # componentes separados + Uf
 │   ├── constants/uf.constant.ts             # NOVO — UFS
-│   ├── components/local-form/               # p-dialog → conteúdo do drawer
-│   └── pages/locais/                        # tabela com menu de funil, contador
+│   ├── components/local-form/               # sai do p-dialog, passa a viver no drawer
+│   ├── components/local-detalhe/            # NOVO — ficha somente leitura (US5)
+│   └── pages/locais/                        # tabela com menu de funil, contador, Ver detalhes
 ├── domain/impacto/
-│   └── apis/impacto.api.ts                  # NOVO — valor-social/por-local
-└── widget/components/form-drawer/           # NOVO — painel compartilhado
+│   ├── apis/impacto.api.ts                  # NOVO — valor-social/por-local
+│   └── interfaces/impacto.interface.ts      # NOVO — ValorSocialLocal
+├── shared/services/viewport/                # NOVO — signal de largura de viewport
+└── widget/components/form-drawer/           # NOVO — painel compartilhado (form e ficha)
 ```
 
 **Structure Decision**: nada de novo estruturalmente — a feature ocupa as camadas que o refactor de arquitetura já estabeleceu. O backend segue pacote por domínio (`local/{domain,repository,service,web}`). No frontend, dado de domínio fica em `domain/local/` e `domain/impacto/`, e o painel de cadastro vai para `widget/components/` porque é UI **sem conhecimento de domínio** — é o que permite Pontos e Coletas reaproveitá-lo sem depender de Local.
 
-Duas observações sobre o alcance real:
+Quatro observações sobre o alcance real:
 
 - **`domain/impacto/apis/` é criado agora**, mas o domínio `impacto` já existia no frontend desde o refactor (com a página do painel). A feature só acrescenta a camada de acesso a dados que faltava.
 - **Os testes de Ponto, Coleta e Impacto entram na fase Red** não porque mudam de comportamento, mas porque constroem `Local` como *fixture*. É custo de propagação do modelo, não de regra nova — e por isso são reescritos mecanicamente.
+- **`shared/services/viewport/` não estava previsto.** A consulta de mídia saiu do componente porque o jsdom não implementa `matchMedia`: sem essa camada, todo spec que renderizasse um componente responsivo precisaria instalar um stub global.
+- **A US5 (ficha do local) entrou depois** do plano original e do gate `/speckit-analyze`. Ela não adiciona camada nova: reaproveita o `form-drawer`, que passa a aceitar fechamento pelo X e rodapé projetado, e consome endpoints existentes. As decisões técnicas dela estão em `research.md` D11.
 
 ## Complexity Tracking
 

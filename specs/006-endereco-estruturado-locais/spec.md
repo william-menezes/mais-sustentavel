@@ -89,6 +89,28 @@ O cadastro e a edição acontecem num painel sobreposto à lista, que preserva o
 
 ---
 
+### User Story 5 - Ver a ficha de um local (Priority: P3)
+
+O Gestor abre, a partir da lista, um painel somente leitura com a ficha de um local: nome, tipo e situação; três indicadores — litros acumulados, valor social em reais e quantidade de pontos de coleta; o endereço completo formatado numa única leitura; e a lista dos pontos daquele local. Do próprio painel ele parte para editar o local, arquivá-lo ou reativá-lo, ou cadastrar um novo ponto — sem precisar voltar à lista para isso.
+
+**Why this priority**: A lista responde "quais locais existem"; a ficha responde "como está este local". Hoje, para saber quantos pontos um local tem e quanto ele já recolheu, o Gestor cruza a tela de Pontos com a visão de impacto na cabeça. É leitura, não capacidade nova de escrita — por isso vem depois das quatro primeiras, e depende de US1 (para ter endereço estruturado a formatar) e de US2 (para ter a lista de onde partir).
+
+**Independent Test**: Com a lista aberta, acionar "Ver detalhes" num local que tenha pontos e coletas e conferir identificação, os três indicadores, o endereço completo e a lista de pontos; repetir num local migrado do modelo antigo (só a rua preenchida) e num local sem nenhum ponto; fechar o painel e confirmar que a lista continua exatamente como estava.
+
+**Acceptance Scenarios**:
+
+1. **Dado** que estou na lista de locais, **Quando** aciono "Ver detalhes" no menu de ações de uma linha, **Então** um painel somente leitura se abre sobre a lista, sem navegar para outra tela, exibindo o nome, o tipo e a situação daquele local.
+2. **Dado** que a ficha de um local está aberta, **Quando** observo os indicadores, **Então** vejo os litros acumulados, o valor social em reais e a quantidade de pontos de coleta daquele local.
+3. **Dado** um local com todos os componentes de endereço preenchidos, **Quando** abro sua ficha, **Então** vejo o endereço completo formatado numa única leitura, inclusive o complemento.
+4. **Dado** um local migrado do modelo antigo, com apenas a rua preenchida e os demais componentes nulos, **Quando** abro sua ficha, **Então** vejo o texto disponível sem vírgula, hífen ou travessão solto, e nenhum componente ausente aparece como espaço em branco ou marcador técnico.
+5. **Dado** um local sem nenhum ponto de coleta, **Quando** abro sua ficha, **Então** a quantidade de pontos aparece como zero e recebo mensagem própria de que o local ainda não tem pontos, com o caminho para cadastrar o primeiro.
+6. **Dado** que o agregado de impacto está indisponível, **Quando** abro a ficha de um local, **Então** os indicadores de litros e de valor social aparecem como `—`, nunca como zero, e o restante da ficha continua utilizável.
+7. **Dado** que a consulta dos pontos do local falha, **Quando** a ficha está aberta, **Então** sou avisado de que não foi possível carregar os pontos, e identificação, indicadores e endereço continuam visíveis.
+8. **Dado** que a ficha está aberta, **Quando** aciono editar, arquivar/reativar ou cadastrar ponto, **Então** o fluxo correspondente já existente é iniciado a partir do próprio painel.
+9. **Dado** que a ficha está aberta, **Quando** aciono o fechamento do painel, **Então** ele fecha sem pedir confirmação e a lista permanece como estava.
+
+---
+
 ### Edge Cases
 
 - **Espaços em branco**: campos obrigatórios contendo apenas espaços são tratados como ausentes e reprovados.
@@ -103,6 +125,9 @@ O cadastro e a edição acontecem num painel sobreposto à lista, que preserva o
 - **Local inexistente**: editar ou arquivar um local que não existe resulta em "não encontrado", sem expor detalhes internos.
 - **Nomes homônimos**: continuam permitidos; nem nome nem endereço são identificadores únicos (dois locais podem dividir o mesmo endereço, ex.: dois blocos).
 - **Acesso não autenticado**: qualquer operação sobre locais sem sessão válida é negada.
+- **Endereço incompleto na ficha**: local migrado tem só a rua; o endereço formatado não pode exibir separador sem conteúdo de um dos lados.
+- **Agregado de impacto indisponível na ficha**: os indicadores mostram `—`; exibir zero afirmaria que o local não opera, o que é falso.
+- **Pontos do local carregando ou com falha**: a ficha abre e permanece legível; a lista de pontos tem estado próprio, independente do resto do painel.
 
 ## Requirements *(mandatory)*
 
@@ -154,10 +179,23 @@ O cadastro e a edição acontecem num painel sobreposto à lista, que preserva o
 - **FR-030**: As mensagens de erro NÃO DEVEM expor detalhes internos do sistema, inclusive as originadas na consulta ao serviço externo de CEP.
 - **FR-031**: O endereço detalhado NÃO DEVE ser exposto em nenhuma superfície pública por esta feature; a regra de privacidade de endereço em locais privados pertence à LP-01d.
 
+**Ficha do local**
+
+- **FR-032**: A ficha de um Local DEVE ser apresentada em painel **somente leitura** sobreposto à lista, sem navegar para outra tela, e DEVE ser acionável a partir da própria linha do local.
+- **FR-033**: A ficha DEVE identificar o Local por nome, tipo e situação (ativo ou arquivado).
+- **FR-034**: A ficha DEVE exibir três indicadores do Local: litros acumulados, valor social em reais e quantidade de pontos de coleta.
+- **FR-035**: A ficha DEVE distinguir **zero** de **indisponível** nos indicadores: zero quando o agregado responde e não há valor para aquele local, e `—` quando o agregado não pôde ser obtido; indisponibilidade NUNCA DEVE ser apresentada como zero.
+- **FR-036**: A ficha DEVE exibir o endereço completo formatado numa única leitura, tolerando componentes ausentes — nenhum separador DEVE aparecer sem conteúdo de ambos os lados, e componente ausente NÃO DEVE produzir espaço em branco nem marcador técnico.
+- **FR-037**: A ficha DEVE listar os pontos de coleta do Local, com estados distintos para carregando, nenhum ponto cadastrado e falha ao carregar; a falha da lista de pontos NÃO DEVE impedir a leitura do restante da ficha.
+- **FR-038**: A ficha DEVE oferecer, a partir do próprio painel, as ações de editar o Local, arquivá-lo ou reativá-lo e cadastrar um ponto de coleta, acionando os fluxos já existentes — sem duplicar regra de negócio.
+- **FR-039**: A ficha DEVE poder ser fechada por acionamento de fechamento, sem confirmação e sem alterar a lista — diferentemente do painel de formulário (FR-026), que só é abandonado por Cancelar.
+
 ### Key Entities *(include if feature involves data)*
 
 - **Local**: instituição atendida pela operação. Atributos: **nome** (texto obrigatório), **tipo** (lista fechada: condomínio, escola, empresa, espaço público, outro), **endereço** — agora decomposto em **CEP**, **rua**, **número**, **complemento** (opcional), **bairro**, **cidade** e **UF** (lista fechada das unidades federativas) — e **situação de arquivamento** (ativo ou arquivado). Nome e endereço não são identificadores únicos.
 - **Litros recolhidos por local**: grandeza derivada, somatório dos litros reais das coletas dos pontos do local. Não é atributo do Local: é leitura calculada, já disponível na visão de impacto (IS-01), exibida aqui por conveniência do Gestor. Segue o trilho de medição real (RN-G-01 / Art. 2.1).
+- **Valor social por local**: grandeza derivada, calculada na IS-01 a partir dos litros reais. Como os litros, não é atributo do Local — é leitura exibida na ficha (US5), vinda do mesmo agregado que alimenta a coluna Litros.
+- **Pontos de coleta do local**: coleção já modelada na CA-02 (feature `003-cadastro-pontos`). Nesta feature aparece apenas como leitura na ficha do Local (US5) — quantidade e lista. Nenhum atributo de Ponto é criado ou alterado aqui.
 
 ## Success Criteria *(mandatory)*
 
@@ -172,6 +210,10 @@ O cadastro e a edição acontecem num painel sobreposto à lista, que preserva o
 - **SC-007**: Ao abrir a lista, 100% dos locais exibidos por padrão estão ativos.
 - **SC-008**: O formulário de cadastro é utilizável sem rolagem horizontal em telas a partir de 360 px de largura.
 - **SC-009**: Ao rolar o formulário até o fim, título e botões de ação continuam visíveis em 100% das interações.
+- **SC-010**: A partir da lista, o Gestor chega aos litros, ao valor social e à quantidade de pontos de um local em no máximo dois acionamentos, sem sair da tela de Locais.
+- **SC-011**: 100% dos locais exibem o endereço na ficha sem separador solto, incluindo os migrados do modelo antigo, que só têm a rua preenchida.
+- **SC-012**: Com o agregado de impacto indisponível, 0% dos indicadores da ficha exibem zero — todos exibem `—`, e a ficha continua legível.
+- **SC-013**: 100% das ações oferecidas na ficha (editar, arquivar/reativar, cadastrar ponto) iniciam o mesmo fluxo já disponível na lista, sem tela intermediária nova.
 
 ## Assumptions
 
@@ -182,12 +224,16 @@ O cadastro e a edição acontecem num painel sobreposto à lista, que preserva o
 - **Litros por local** reutiliza o cálculo já entregue na IS-01, sem redefinir a regra de valor social nesta feature.
 - **Filtragem sobre o conjunto carregado.** O volume esperado é de dezenas de locais; a filtragem não exige paginação sob demanda no servidor. Se o volume crescer uma ordem de magnitude, a estratégia é revista em história própria.
 - **A situação continua sendo ativo ou arquivado.** Nenhum estado intermediário é introduzido.
+- **A ficha do local não introduz endpoint novo.** Nome, tipo, situação e endereço vêm do Local já carregado na lista; litros e valor social, do mesmo agregado por local já consultado para a coluna Litros; os pontos, do endpoint de pontos do local que a CA-02 já entregou.
+- **Pontos identificados pelo id abreviado na ficha.** O desenho de referência nomeava cada ponto ("Bloco B · garagem"), mas a entidade `Ponto` não tem campo de nome — criá-lo exigiria migração de schema e mudança de contrato, fora do escopo desta feature. Enquanto o campo não existir, a ficha identifica cada ponto pelo id abreviado.
+- **O mapa do local é espaço reservado declarado.** O desenho de referência reservava uma área de mapa; ela é renderizada como espaço reservado explícito, sem mapa nem coordenada, porque geocodificação pertence à LP-01d. Um mapa genérico sugeriria localização verificada que o sistema não tem.
 - Reutiliza a autenticação, o modelo de papéis e a proteção anti-CSRF já entregues (AC-01, CA-01).
 
 ## Dependencies
 
 - **CA-01** (feature `002-cadastro-locais`) — cadastro, edição, arquivamento e reativação de Local já implantados. Esta feature altera o modelo de endereço e a listagem construídos lá.
-- **IS-01** (feature `005-valor-social`) — cálculo de litros reais agregados por local, reaproveitado na coluna de litros.
+- **CA-02** (feature `003-cadastro-pontos`) — pontos de coleta por local. A ficha do Local (US5) lê a lista de pontos e parte para o cadastro de ponto já entregues lá.
+- **IS-01** (feature `005-valor-social`) — cálculo de litros reais e valor social agregados por local, reaproveitado na coluna de litros e nos indicadores da ficha.
 - **Serviço público de consulta de CEP** — dependência externa, deliberadamente não crítica (FR-013).
 
 ## Out of Scope
@@ -195,6 +241,8 @@ O cadastro e a edição acontecem num painel sobreposto à lista, que preserva o
 - **Número de pontos de coleta por local** na lista. A VH-01 menciona esse dado, mas ele exige um agregado que a API não expõe hoje; fica para história própria. **Esta feature entrega a VH-01 parcialmente** — nome, tipo, litros e situação, sem a contagem de pontos.
 - **Refatoração das telas de Pontos de coleta e Coletas.** Os padrões de lista filtrável e de painel de cadastro estabelecidos aqui serão reaproveitados nessas telas em histórias seguintes.
 - **Seleção de registro relacionado com criação sobreposta** (escolher um Local ao cadastrar um Ponto, criando o Local sem sair do fluxo). O padrão foi definido junto com esta feature, mas Local não possui campo derivado — sua primeira aplicação é na tela de Pontos.
-- **Geocodificação, mapa público e privacidade de endereço em locais privados** (LP-01d).
+- **Geocodificação, mapa público e privacidade de endereço em locais privados** (LP-01d). Na ficha do local (US5), a área de mapa do desenho de referência fica como espaço reservado declarado — sem mapa e sem coordenada.
+- **Nome próprio de Ponto de coleta.** O desenho de referência mostrava cada ponto com um nome ("Bloco B · garagem"), mas a entidade `Ponto` não possui esse campo; acrescentá-lo é migração de schema e mudança de contrato, portanto história própria. A ficha exibe os pontos identificados pelo id abreviado.
+- **Litros e data da última coleta por ponto** na ficha do local. O desenho de referência mostrava "614 L · coleta 11/07" em cada ponto, mas não existe agregado por ponto no backend, e obtê-lo hoje custaria uma chamada por ponto (N+1). É a história **VH-02** do backlog ("como Gestor, quero ver o volume por ponto"), ainda não implementada — a ficha lista os pontos sem métrica própria.
 - **Busca textual global** e ordenação persistida entre sessões.
 - **Exclusão física** de locais — proibida pela RN-G-06.
