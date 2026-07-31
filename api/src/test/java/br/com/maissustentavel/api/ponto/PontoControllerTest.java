@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -94,6 +95,42 @@ class PontoControllerTest {
     void listarSemSessaoRetorna401() throws Exception {
         UUID localId = local(false);
         mockMvc.perform(get("/api/locais/" + localId + "/pontos"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ---------- visão geral: coleção global ----------
+
+    @Test
+    void listarTodosRetornaEstacoesDeLocaisDiferentesComONomeDoLocal() throws Exception {
+        // A coleção global é a operação que a visão geral precisa e que não existia (FR-001).
+        criarPonto(local(false));
+        Local outro = new Local();
+        outro.setNome("Outro local");
+        LocalFixture.comEnderecoValido(outro);
+        outro.setTipo(TipoLocal.EMPRESA);
+        criarPonto(localRepository.saveAndFlush(outro).getId());
+
+        mockMvc.perform(get("/api/pontos").with(user("gestor")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].localNome").value(containsInAnyOrder("Ativo", "Outro local")));
+    }
+
+    @Test
+    void listarTodosTrazSoAtivosPorPadrao() throws Exception {
+        String id = criarPonto(local(false));
+        mockMvc.perform(post("/api/pontos/" + id + "/arquivar").with(user("gestor")).with(csrf()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/pontos").with(user("gestor")))
+                .andExpect(jsonPath("$.length()").value(0));
+        mockMvc.perform(get("/api/pontos").param("arquivados", "true").with(user("gestor")))
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void listarTodosSemSessaoRetorna401() throws Exception {
+        mockMvc.perform(get("/api/pontos"))
                 .andExpect(status().isUnauthorized());
     }
 

@@ -40,6 +40,16 @@ public class PontoController {
         return servico.listar(localId, arquivados);
     }
 
+    /**
+     * Coleção global, para a visão geral de Pontos de coleta. Sem paginação: a operação tem dezenas de
+     * estações e a filtragem acontece no cliente, como na visão geral de Locais.
+     */
+    @GetMapping("/api/pontos")
+    public List<PontoResponse> listarTodos(
+            @RequestParam(name = "arquivados", defaultValue = "false") boolean arquivados) {
+        return servico.listarTodos(arquivados);
+    }
+
     @GetMapping(value = "/api/pontos/{id}/qr", produces = MediaType.IMAGE_PNG_VALUE)
     public byte[] qr(@PathVariable UUID id) {
         return servico.imagemQr(id);

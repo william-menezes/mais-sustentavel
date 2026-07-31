@@ -7,6 +7,8 @@ import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
 import br.com.maissustentavel.api.ponto.domain.Ponto;
 import br.com.maissustentavel.api.ponto.repository.PontoRepository;
+
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
 class PontoRepositoryTest {
+
+    private static final String PORTARIA = "portaria";
+    private static final String CANTINA = "cantina";
 
     @Autowired
     PontoRepository pontoRepository;
@@ -74,6 +79,60 @@ class PontoRepositoryTest {
         Ponto salvo = pontoRepository.saveAndFlush(PontoFixture.semReferencia(local()));
 
         assertNull(pontoRepository.findById(salvo.getId()).orElseThrow().getReferencia());
+    }
+
+    @Test
+    void listaGlobalSeparaAtivosDeArquivados() {
+        Local a = local("A");
+        pontoRepository.save(PontoFixture.comSituacao(a, false));
+        pontoRepository.save(PontoFixture.comSituacao(a, true));
+
+        assertEquals(1, pontoRepository.buscarTodos(false).size());
+        assertEquals(1, pontoRepository.buscarTodos(true).size());
+    }
+
+    @Test
+    void listaGlobalTrazOLocalJunto() {
+        // Prova o `join fetch`: fora da transação do repositório, ler o nome do local só funciona se a
+        // associação vier carregada. Sem isso, exibir "Local · referência" custaria uma consulta por
+        // linha — o N+1 que esta feature evita em dois lugares.
+        pontoRepository.saveAndFlush(PontoFixture.ativo(local("EMEF Zaida Barbosa")));
+
+        Ponto encontrado = pontoRepository.buscarTodos(false).getFirst();
+
+        assertEquals("EMEF Zaida Barbosa", encontrado.getLocal().getNome());
+    }
+
+    @Test
+    void listaGlobalOrdenaPorLocalDepoisPorReferencia() {
+        Local zeta = local("Zeta");
+        Local alfa = local("Alfa");
+        pontoRepository.save(PontoFixture.comReferencia(zeta, PORTARIA));
+        pontoRepository.save(PontoFixture.comReferencia(alfa, PORTARIA));
+        pontoRepository.save(PontoFixture.comReferencia(alfa, CANTINA));
+
+        var ordenados = pontoRepository.buscarTodos(false).stream()
+                .map(p -> p.getLocal().getNome() + "/" + p.getReferencia())
+                .toList();
+
+        assertEquals(List.of("Alfa/cantina", "Alfa/portaria", "Zeta/portaria"), ordenados);
+    }
+
+    @Test
+    void estacaoSemReferenciaVaiParaOFimDoGrupoDoSeuLocal() {
+        // Agrupar estações do mesmo local é o objetivo da ordenação; as sem nome vão ao fim do grupo,
+        // e não ao fim da lista, senão sairiam do lado do local errado.
+        Local alfa = local("Alfa");
+        Local beta = local("Beta");
+        pontoRepository.save(PontoFixture.semReferencia(alfa));
+        pontoRepository.save(PontoFixture.comReferencia(alfa, PORTARIA));
+        pontoRepository.save(PontoFixture.comReferencia(beta, CANTINA));
+
+        var ordenados = pontoRepository.buscarTodos(false).stream()
+                .map(p -> p.getLocal().getNome() + "/" + p.getReferencia())
+                .toList();
+
+        assertEquals(List.of("Alfa/portaria", "Alfa/null", "Beta/cantina"), ordenados);
     }
 
     @Test

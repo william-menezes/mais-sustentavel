@@ -65,6 +65,45 @@ class PontoServiceTest {
     }
 
     @Test
+    void listarTodosTrazEstacoesDeLocaisDiferentes() {
+        UUID a = local(false);
+        Local outro = new Local();
+        outro.setNome("Outro local");
+        LocalFixture.comEnderecoValido(outro);
+        outro.setTipo(TipoLocal.EMPRESA);
+        UUID b = localRepository.saveAndFlush(outro).getId();
+        when(geradorQrCode.gerarPng(anyString())).thenReturn(new byte[]{1});
+        servico.criar(a);
+        servico.criar(b);
+
+        var todos = servico.listarTodos(false);
+
+        assertEquals(2, todos.size());
+    }
+
+    @Test
+    void listarTodosPreencheONomeDoLocal() {
+        // É metade da identificação "Local · referência" na lista (FR-003). Sem isso o cartão diria
+        // apenas a referência, e duas estações homônimas em locais diferentes ficariam iguais.
+        UUID localId = local(false);
+        when(geradorQrCode.gerarPng(anyString())).thenReturn(new byte[]{1});
+        servico.criar(localId);
+
+        assertEquals("Ativo", servico.listarTodos(false).getFirst().localNome());
+    }
+
+    @Test
+    void listarTodosSeparaAtivosDeArquivados() {
+        UUID localId = local(false);
+        when(geradorQrCode.gerarPng(anyString())).thenReturn(new byte[]{1});
+        PontoResponse criado = servico.criar(localId);
+        servico.arquivar(criado.id());
+
+        assertTrue(servico.listarTodos(false).isEmpty());
+        assertEquals(1, servico.listarTodos(true).size());
+    }
+
+    @Test
     void criarPersisteComQrECriadoEm() {
         UUID localId = local(false);
         PontoResponse r = servico.criar(localId);

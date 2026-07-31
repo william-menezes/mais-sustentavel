@@ -70,6 +70,17 @@ public class PontoService {
         return pontos.stream().map(PontoService::toResponse).toList();
     }
 
+    /**
+     * Estações de todos os locais, para a visão geral.
+     *
+     * <p>Delega a uma consulta com {@code join fetch} porque a resposta carrega o **nome** do local em
+     * cada linha: com a associação LAZY, mapear a lista dispararia uma consulta por estação.
+     */
+    @Transactional(readOnly = true)
+    public List<PontoResponse> listarTodos(boolean arquivados) {
+        return pontoRepository.buscarTodos(arquivados).stream().map(PontoService::toResponse).toList();
+    }
+
     @Transactional(readOnly = true)
     public byte[] imagemQr(UUID id) {
         Ponto ponto = buscar(id);
@@ -103,6 +114,8 @@ public class PontoService {
         return new PontoResponse(
                 ponto.getId(),
                 ponto.getLocal().getId(),
+                ponto.getLocal().getNome(),
+                ponto.getReferencia(),
                 ponto.getQrConteudo(),
                 "/api/pontos/" + ponto.getId() + "/qr",
                 ponto.isArquivado(),
