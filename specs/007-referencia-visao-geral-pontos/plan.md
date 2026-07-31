@@ -16,9 +16,9 @@ A abordagem técnica em uma frase por frente:
   porque as estações já cadastradas não têm valor e inventar um foi recusado (D1).
 - **API**: três mudanças no contrato de Ponto — corpo no cadastro, `referencia` e `localNome` na
   resposta, e coleção global `/api/pontos` que não existia em forma nenhuma (D2, D3).
-- **Indicadores da ficha**: calculados no cliente a partir do histórico de coletas que a ficha já
-  precisa buscar. Nenhum agregado novo no servidor — é o recorte de escopo que o Gestor decidiu, e ele
-  tem a vantagem de garantir que os números concordem com o histórico exibido (D5).
+- **Indicadores da ficha**: vêm da consulta de coletas que a ficha já precisa fazer — o **total já chega
+  somado do servidor** (`totalLitros`), e só a média é derivada na tela. Nenhum agregado novo, e os
+  números não podem divergir do histórico exibido logo abaixo deles (D5).
 - **Tela**: uma única `p-table` dona do estado de filtro nos dois modos de visualização, com o corpo
   alternando entre linhas e grade de cartões (D6).
 - **Reuso**: o painel compartilhado, o formulário de Local e a ficha de Local vêm da 006 sem
@@ -42,8 +42,8 @@ Schema governado por Flyway; Hibernate em `ddl-auto: validate`. Última migraç�
 (mesma origem)
 
 **Performance Goals**: filtragem e alternância de visualização no cliente sobre dezenas de estações,
-sem paginação no servidor. A ficha de uma estação faz **uma** consulta de coletas e deriva os três
-indicadores dela — nenhuma consulta por linha
+sem paginação no servidor. A ficha de uma estação faz **uma** consulta de coletas e monta os três
+indicadores da resposta dela — nenhuma consulta por linha
 
 **Constraints**: nenhuma estação já cadastrada pode ser perdida ou ganhar rótulo inventado (FR-012) ·
 o endereço copiado do QR é sempre o completo, mesmo exibido abreviado (FR-031) · a obrigatoriedade da

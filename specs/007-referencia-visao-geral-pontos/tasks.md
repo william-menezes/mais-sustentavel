@@ -52,19 +52,21 @@ description: "Tarefas de implementação — Referência da estação e visão g
 
 - [ ] T004 Reescrever `PontoRepositoryTest` — persistir `Ponto` **com** referência e **sem** referência (a coluna aceita nulo); confirmar que o CHECK recusa mais de 60 caracteres; `findByArquivadoFalse`/`True` seguem funcionando, em `test/.../ponto/PontoRepositoryTest.java` (**Ver falhar**; FR-010, FR-012, FR-017, data-model)
 
-### Red — ajuste mecânico de fixture ⚠️
+### Refatoração de fixture — **não é Red** ⚠️ premissa corrigida
 
-> Estes seis arquivos **não mudam de comportamento**: constroem `Ponto` como fixture e param de compilar quando o cadastro passa a exigir corpo. Esforço é de substituição, não de reprojeto — por isso vão em paralelo e separados de T004.
+> **A previsão estava errada.** Estas duas tarefas foram escritas afirmando que os seis arquivos parariam de compilar quando o cadastro passasse a exigir corpo. Ao abri-los, nenhum deles usa o cadastro: todos constroem `Ponto` **direto**, com `new Ponto()` e três setters, e os únicos caminhos de API que tocam são `/api/pontos/{id}/coletas`. Ou seja, **continuam compilando e passando** sem alteração alguma.
+>
+> As tarefas ficam, reclassificadas de Red para refatoração, pelo motivo que a decisão D10 já dava: seis construções idênticas do mesmo objeto significam que a **próxima** mudança no modelo de Ponto vira seis edições iguais. O ganho é de manutenção, não de correção — e por isso não há "Ver falhar" aqui.
 
-- [ ] T005 [P] Ajustar as fixtures de `Ponto` nos testes de Coleta para usar `PontoFixture` (`ColetaRepositoryTest`, `ColetaServiceTest`, `ColetaControllerTest`) em `test/.../coleta/` (**Ver falhar**; depende de T003)
-- [ ] T006 [P] Ajustar as fixtures de `Ponto` nos testes de Impacto para usar `PontoFixture` (`ImpactoRepositoryTest`, `ImpactoServiceTest`, `ImpactoControllerTest`) em `test/.../impacto/` (**Ver falhar**; depende de T003)
+- [ ] T005 [P] Trocar a construção manual de `Ponto` por `PontoFixture` nos testes de Coleta (`ColetaRepositoryTest`, `ColetaServiceTest`, `ColetaControllerTest`) em `test/.../coleta/` (depende de T003; research D10)
+- [ ] T006 [P] Trocar a construção manual de `Ponto` por `PontoFixture` nos testes de Impacto (`ImpactoRepositoryTest`, `ImpactoServiceTest`, `ImpactoControllerTest`) em `test/.../impacto/` (depende de T003; research D10)
 
 ### Green — implementação
 
 - [ ] T007 [P] Migração `V7__referencia_ponto.sql` — coluna `referencia text` **nullable** e constraint `ponto_referencia_tamanho_check` com `char_length(referencia) <= 60`, terminando com o comentário da consulta de fila de trabalho (`select id, local_id from ponto where referencia is null`), em `api/src/main/resources/db/migration/V7__referencia_ponto.sql` (FR-012, FR-017, research D1, data-model)
 - [ ] T008 Entidade `Ponto` — campo `referencia` sem `length` no `@Column` (o limite é do banco e do DTO) e sem `nullable = false`, em `.../ponto/domain/Ponto.java` (depende de T007; FR-010, FR-012)
-- [ ] T009 [P] `PontoRequest` **novo** — `referencia` com `@NotBlank` e `@Size(max = 60)`; **sem** `localId` no corpo, em `.../ponto/web/dto/PontoRequest.java` (FR-011, FR-017, FR-018, contracts)
-- [ ] T010 [P] `PontoResponse` — acrescentar `referencia` e `localNome`, em `.../ponto/web/dto/PontoResponse.java` (FR-003, FR-014, contracts)
+
+> **Os DTOs saíram desta fase** depois do `/speckit-analyze`. `PontoResponse` (T010) foi para a US1 e `PontoRequest` (T009) para a US2, cada um logo **depois** do teste que o cobre. Estavam aqui por reflexo — na 006 a Foundational continha entidade e DTOs, mas lá os DTOs eram testados na própria Foundational. Aqui não são, e a ordem violava o Art. 5.2.
 
 ---
 
@@ -82,6 +84,7 @@ description: "Tarefas de implementação — Referência da estação e visão g
 
 ### Green — Backend
 
+- [ ] T010 [P] [US1] `PontoResponse` — acrescentar `referencia` e `localNome`, em `.../ponto/web/dto/PontoResponse.java` (depende de T012, T013; FR-003, FR-014, contracts)
 - [ ] T014 Consulta global no `PontoRepository` com `join fetch` do local e ordenação por nome do local e referência, em `.../ponto/repository/PontoRepository.java` (depende de T011; FR-001)
 - [ ] T015 Método de listagem global no `PontoService`, mapeando `localNome` a partir do local carregado, em `.../ponto/service/PontoService.java` (depende de T014; FR-001, FR-003)
 - [ ] T016 `GET /api/pontos` no `PontoController`, com parâmetro `arquivados` padrão `false`, em `.../ponto/web/PontoController.java` (depende de T015; FR-001, FR-007, contracts)
@@ -120,11 +123,12 @@ description: "Tarefas de implementação — Referência da estação e visão g
 ### Red — Backend ⚠️
 
 - [ ] T029 [P] [US2] Ampliar `PontoServiceTest` — cadastro **normaliza com `trim`** antes de persistir; referência só com espaços é **recusada**, nunca convertida em `null` (senão fura a obrigatoriedade por dentro, já que a coluna aceita nulo); edição altera a referência; edição **não** move a estação de local; edição **não** altera `qrConteudo`, em `test/.../ponto/PontoServiceTest.java` (**Ver falhar**; FR-011, FR-015, FR-016, FR-018, research D3, D4)
-- [ ] T030 [P] [US2] Ampliar `PontoControllerTest` — cadastro sem corpo, com referência vazia, só espaços e acima de 60 caracteres responde `400` com o mapa `campos`; `PUT /api/pontos/{id}` responde 200 e `404` para estação inexistente; `localId` enviado no corpo do `PUT` é ignorado e a estação permanece no mesmo local, em `test/.../ponto/PontoControllerTest.java` (**Ver falhar**; FR-011, FR-015, FR-017, FR-018, contracts)
+- [ ] T030 [P] [US2] Ampliar `PontoControllerTest` — cadastro sem corpo, com referência vazia, só espaços e acima de 60 caracteres responde `400` com o mapa `campos`; `PUT /api/pontos/{id}` responde 200 e `404` para estação inexistente; `localId` enviado no corpo do `PUT` é ignorado e a estação permanece no mesmo local; **a estação criada continua recebendo QR único** — o caminho de cadastro muda de forma nesta feature e a garantia não pode sair de graça, em `test/.../ponto/PontoControllerTest.java` (**Ver falhar**; FR-011, FR-015, FR-017, FR-018, **FR-026**, contracts)
 
 ### Green — Backend
 
-- [ ] T031 [US2] `PontoService` — cadastro recebendo a referência do corpo com `trim`, e operação de edição que altera **somente** a referência, em `.../ponto/service/PontoService.java` (depende de T029; FR-011, FR-015, FR-016, research D3, D4)
+- [ ] T009 [P] [US2] `PontoRequest` **novo** — `referencia` com `@NotBlank` e `@Size(max = 60)`; **sem** `localId` no corpo, em `.../ponto/web/dto/PontoRequest.java` (depende de T029, T030; FR-011, FR-017, FR-018, contracts)
+- [ ] T031 [US2] `PontoService` — cadastro recebendo a referência do corpo com `trim`, e operação de edição que altera **somente** a referência, em `.../ponto/service/PontoService.java` (depende de T009, T029; FR-011, FR-015, FR-016, research D3, D4)
 - [ ] T032 [US2] `PontoController` — corpo `@Valid` no cadastro e `PUT /api/pontos/{id}`, em `.../ponto/web/PontoController.java` (depende de T031; FR-011, FR-015, FR-018, contracts)
 
 ### Red → Green — Frontend ⚠️
@@ -160,7 +164,8 @@ description: "Tarefas de implementação — Referência da estação e visão g
 - [ ] T042 [US3] Estender o painel de cadastro até T041 passar — acrescentar busca de local, referência e aviso de pendências ao painel que **já existe**, sem reescrevê-lo, em `frontend/src/app/domain/ponto/components/ponto-form/ponto-form.component.{ts,html,scss}` (depende de T034, T038, T040, T041; FR-019 a FR-025)
 - [ ] T043 [US3] Ampliar `pontos.page.spec.ts` — "Novo ponto" abre o painel e a estação criada aparece na lista, em `frontend/src/app/domain/ponto/pages/pontos/pontos.page.spec.ts` (**Ver falhar**; FR-019, SC-004)
 - [ ] T044 [US3] Hospedar o painel de cadastro na visão geral até T043 passar, em `frontend/src/app/domain/ponto/pages/pontos/pontos.page.{ts,html}` (depende de T042, T043)
-- [ ] T045 [US3] Ajustar a ficha do Local, que já hospeda o painel de cadastro, para passar o local pré-selecionado e `nivel` 1 — sem isso o painel abriria pedindo um local que já se sabe qual é, em `frontend/src/app/domain/local/components/local-detalhe/local-detalhe.component.{ts,html,spec.ts}` (depende de T042; FR-019)
+- [ ] T045 [US3] Ampliar `local-detalhe.component.spec.ts` — ao abrir o cadastro de ponto pela ficha do Local, o painel recebe **aquele local já escolhido** e `nivel` 1, em `frontend/src/app/domain/local/components/local-detalhe/local-detalhe.component.spec.ts` (**Ver falhar**; depende de T042; FR-019)
+- [ ] T064 [US3] Passar local pré-selecionado e `nivel` até T045 passar — sem isso o painel abriria pela ficha pedindo um local que já se sabe qual é, e no nível de empilhamento errado, em `frontend/src/app/domain/local/components/local-detalhe/local-detalhe.component.{ts,html}` (depende de T045; FR-019)
 
 ---
 
@@ -226,11 +231,13 @@ description: "Tarefas de implementação — Referência da estação e visão g
 
 ## Dependencies & Execution Order
 
-- **Setup (T001–T002)** → **Foundational (T003–T010)** → **US1 (T011–T028)** → **US2 (T029–T036)** → **US3 (T037–T045)** → **US4 (T046–T053)** → **US5 (T054–T057)** → **US6 (T058–T059)** → **Polish (T060–T063)**.
+- **Setup (T001–T002)** → **Foundational (T003–T008)** → **US1 (T011–T028, mais T010)** → **US2 (T029–T036, mais T009)** → **US3 (T037–T045, T064)** → **US4 (T046–T053)** → **US5 (T054–T057)** → **US6 (T058–T059)** → **Polish (T060–T063)**.
+
+> **Os IDs não são monotônicos em três pontos**, e a ordem de execução é a **do documento**, não a numérica. `T010` vive na US1 e `T009` na US2 porque o `/speckit-analyze` mostrou que estavam antes dos testes que os cobrem; `T064` é o Green que faltava ao par de `T045`. Manter os IDs estáveis preservou as dezenas de referências cruzadas de dependência — renumerar teria sido a chance de errar uma delas em silêncio. A 006 já tinha esse precedente, com os IDs do Polish anteriores aos da US5.
 
 - **Foundational bloqueia tudo**: sem a migração e o campo na entidade a API não sobe (`ddl-auto: validate`), e sem os DTOs nada compila.
 
-- Dentro de cada história, os pares Red→Green são explícitos: **T011→T014**, **T012/T013→T015/T016**, **T018→T019**, **T020→T021**, **T022→T023**, **T024→T025**, **T026→T027**, **T029→T031**, **T030→T032**, **T033→T034**, **T035→T036**, **T037→T038**, **T039→T040**, **T041→T042**, **T043→T044**, **T046→T047**, **T048→T049**, **T050→T051**, **T052→T053**, **T054→T055**, **T056→T057**, **T058→T059**. O teste é tarefa própria e vem antes.
+- Dentro de cada história, os pares Red→Green são explícitos: **T011→T014**, **T012/T013→T010/T015/T016**, **T018→T019**, **T020→T021**, **T022→T023**, **T024→T025**, **T026→T027**, **T029/T030→T009/T031/T032**, **T033→T034**, **T035→T036**, **T037→T038**, **T039→T040**, **T041→T042**, **T043→T044**, **T045→T064**, **T046→T047**, **T048→T049**, **T050→T051**, **T052→T053**, **T054→T055**, **T056→T057**, **T058→T059**. O teste é tarefa própria e vem antes — **sem exceção**, depois das correções do `/speckit-analyze`.
 
 - **US2 depende de US1** apenas para ter tela onde aparecer; a fatia de API dela é independente.
 
