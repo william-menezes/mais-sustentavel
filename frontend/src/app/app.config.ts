@@ -14,6 +14,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { autenticacaoErroInterceptor } from '@core/interceptors/autenticacao-erro/autenticacao-erro.interceptor';
+import { TRADUCAO_PT_BR } from '@core/i18n/pt-br/pt-br.translation';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -44,6 +45,9 @@ export const appConfig: ApplicationConfig = {
         }
       },
       license: environment.primengLicenseKey,
+      // Rótulos que a biblioteca gera sozinha (menu de filtro, listas vazias, calendário) em pt-BR.
+      // O merge com o padrão é raso — ver a nota no próprio arquivo de tradução.
+      translation: TRADUCAO_PT_BR,
     })
   ]
 };

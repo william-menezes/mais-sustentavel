@@ -420,6 +420,27 @@ ficaram todos no chunk lazy da página.
 O número que importa para o usuário é a **transferência**: ~122 kB comprimidos no carregamento
 inicial. O erro em 1 MB segue como guarda real contra carregar um domínio inteiro por engano.
 
+### Rótulos internos do PrimeNG
+
+Boa parte do texto que aparece na tela **não sai dos nossos templates**: os modos de comparação do
+menu de filtro ("Contém", "Maior que"), os botões Limpar e Aplicar, "Nenhum resultado encontrado",
+nomes de mês e os rótulos de acessibilidade são gerados pela biblioteca. Todos vêm de um único lugar:
+`core/i18n/pt-br/pt-br.translation.ts`, aplicado no `providePrimeNG` do `app.config.ts`.
+
+**Não traduza esses rótulos no template.** Passar `emptyMessage="…"` ou `[showClear]` com texto
+próprio em cada tela é como a divergência começa — o mesmo conceito ganha três redações. Se um termo
+da biblioteca aparecer em inglês, a correção é no arquivo de tradução, e vale para o app inteiro.
+
+Duas armadilhas registradas junto do arquivo, porque nenhuma das duas dá sinal na tela:
+
+- o merge do PrimeNG é de **um nível só**, então um objeto `aria` parcial substitui o da biblioteca
+  por inteiro e transforma os rótulos ausentes em `undefined` para leitores de tela;
+- `searchMessage` e `selectionMessage` passam por `replaceAll('{0}', …)` — remover o marcador não
+  quebra nada visivelmente, só deixa de anunciar o número.
+
+O `pt-br.translation.spec.ts` compara o arquivo com o padrão da **versão instalada** do PrimeNG: uma
+atualização que acrescente rótulo falha o teste nomeando a chave, em vez de deixá-la vazar em inglês.
+
 ## Iteration Guide
 
 1. Focus on ONE component at a time. The system has high internal consistency.
