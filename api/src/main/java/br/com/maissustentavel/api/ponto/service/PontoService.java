@@ -5,6 +5,7 @@ import br.com.maissustentavel.api.local.repository.LocalRepository;
 import br.com.maissustentavel.api.local.service.LocalNaoEncontradoException;
 import br.com.maissustentavel.api.ponto.domain.Ponto;
 import br.com.maissustentavel.api.ponto.repository.PontoRepository;
+import br.com.maissustentavel.api.ponto.web.dto.PontoRequest;
 import br.com.maissustentavel.api.ponto.web.dto.PontoResponse;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -16,8 +17,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Regras de Ponto: cadastrar (em Local ativo, com QR gerado de forma atômica), listar
- * por local, recuperar a imagem do QR e o soft delete (arquivar/reativar).
+ * Regras de Ponto: cadastrar (em Local ativo, com referência e QR gerado de forma atômica),
+ * corrigir a referência, listar por local e no geral, recuperar a imagem do QR e o soft delete
+ * (arquivar/reativar).
  */
 @Service
 public class PontoService {
@@ -41,7 +43,8 @@ public class PontoService {
     }
 
     @Transactional
-    public PontoResponse criar(UUID localId) {
+    public PontoResponse criar(UUID localId, PontoRequest requisicao) {
+        String referencia = normalizar(requisicao.referencia());
         Local local = localRepository.findById(localId)
                 .orElseThrow(() -> new LocalNaoEncontradoException(localId));
         if (local.isArquivado()) {
@@ -55,11 +58,28 @@ public class PontoService {
         Ponto ponto = new Ponto();
         ponto.setId(id);
         ponto.setLocal(local);
+        ponto.setReferencia(referencia);
         ponto.setQrConteudo(conteudo);
         // id atribuído pela aplicação: usa persist (não merge) e flush para recarregar criadoEm.
         entityManager.persist(ponto);
         entityManager.flush();
         return toResponse(ponto);
+    }
+
+    /**
+     * Corrige a referência de uma estação — o único campo editável dela.
+     *
+     * <p>Não recebe local: a RN-G-05 mantém o ponto vinculado ao local, e o QR já colado na parede
+     * aponta para uma estação que o morador associa àquele endereço. Não toca no {@code qrConteudo}:
+     * um QR novo invalidaria o adesivo já impresso. Não olha {@code arquivado}: corrigir o rótulo de
+     * um registro histórico não o reativa (RN-G-06).
+     */
+    @Transactional
+    public PontoResponse editar(UUID id, PontoRequest requisicao) {
+        String referencia = normalizar(requisicao.referencia());
+        Ponto ponto = buscar(id);
+        ponto.setReferencia(referencia);
+        return toResponse(pontoRepository.save(ponto));
     }
 
     @Transactional(readOnly = true)
@@ -103,6 +123,23 @@ public class PontoService {
 
     private Ponto buscar(UUID id) {
         return pontoRepository.findById(id).orElseThrow(() -> new PontoNaoEncontradoException(id));
+    }
+
+    /**
+     * Descarta os espaços das pontas (FR-016) e recusa o que sobrar vazio.
+     *
+     * <p>Recusar, e não converter, é a razão de existir deste método: {@code @NotBlank} no
+     * {@code PontoRequest} já barra {@code "   "}
+     * com 400 em quem entra pela API, e esta guarda garante que nenhum outro chamador consiga
+     * transformar espaços em {@code null}. A coluna aceita nulo para o acervo anterior à V7, então um
+     * nulo vindo de cadastro novo seria uma estação anônima passando por legado (research D4).
+     */
+    private static String normalizar(String referencia) {
+        String limpa = referencia == null ? "" : referencia.trim();
+        if (limpa.isEmpty()) {
+            throw new IllegalArgumentException("referência não pode ser vazia");
+        }
+        return limpa;
     }
 
     private String montarConteudo(UUID id) {

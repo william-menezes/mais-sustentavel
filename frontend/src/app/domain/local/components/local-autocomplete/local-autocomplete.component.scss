@@ -1,0 +1,42 @@
+/* O campo ocupa a coluna do formulário que o hospeda; a oferta de cadastro fica logo abaixo dele. */
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  min-width: 0;
+}
+
+/* Nome em cima, bairro e cidade embaixo: é o que distingue dois locais de nome parecido. */
+.opcao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nome {
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.detalhe {
+  font-size: 12px;
+  color: var(--color-slate);
+}
+
+.dica {
+  font-size: 12px;
+  color: var(--color-slate);
+}
+
+.dica.aviso {
+  color: var(--color-amber, #9a6b00);
+}
+
+/* Texto e ação na mesma linha quando cabem; empilhados em tela estreita, sem apertar o botão. */
+.sem-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xxs);
+}

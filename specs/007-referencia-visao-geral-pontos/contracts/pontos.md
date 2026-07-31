@@ -95,10 +95,17 @@ Passa a exigir corpo. Antes não recebia nenhum.
 
 | Situação | Status | Corpo |
 |---|---|---|
-| Referência ausente, vazia ou só espaços | `400` | `{"campos": {"referencia": "não pode ser vazio"}}` |
-| Referência acima de 60 caracteres | `400` | `{"campos": {"referencia": "..."}}` |
+| **Corpo ausente** | `400` | `{"erro": "Dados inválidos"}` — **sem** o mapa `campos` |
+| Referência vazia (`""`) ou só espaços (`"   "`) | `400` | `{"campos": {"referencia": "não pode ser vazio"}}` |
+| Referência acima de 60 caracteres | `400` | `{"campos": {"referencia": "deve ter no máximo 60 caracteres"}}` |
 | Local inexistente | `404` | erro sem detalhe interno |
 | Local arquivado | `409` | comportamento já existente, preservado |
+
+> **Corpo ausente não produz o mapa `campos`**, e a primeira versão desta tabela dizia que produzia. A
+> requisição sem corpo falha na **desserialização** (`HttpMessageNotReadableException`), antes de o Bean
+> Validation existir para reclamar de campo — então não há campo a nomear. É a mesma assimetria que a
+> 006 registrou para UF inválida, que falha na desserialização do enum. Corrigido depois que a
+> implementação mostrou o comportamento real.
 
 **Por que exigir corpo em vez de aceitá-lo opcional**: FR-011 torna a referência obrigatória em
 cadastros novos e FR-018 exige que a regra valha no servidor. Corpo opcional deixaria aberta uma porta

@@ -1,0 +1,211 @@
+<!-- closable: sem Cancelar no rodapé, o X do cabeçalho é a única saída do painel. -->
+<app-form-drawer
+  [visivel]="visivel()"
+  (visivelChange)="visivel.set($event)"
+  [titulo]="titulo()"
+  [trilha]="trilha()"
+  [closable]="true"
+>
+  @if (ponto()) {
+    <div class="etiquetas">
+      <p-tag [value]="localNome()" severity="secondary" />
+      @if (arquivado()) {
+        <p-tag value="Arquivado" severity="secondary" />
+      } @else {
+        <p-tag value="Ativo" severity="success" />
+      }
+    </div>
+
+    <section class="bloco qr">
+      <img
+        class="imagem"
+        data-testid="qr-imagem"
+        [src]="urlDoQr()"
+        [alt]="'QR Code da estação ' + titulo()"
+        width="148"
+        height="148"
+      />
+      <div class="identificacao">
+        <span class="ref" data-testid="ref-curta">{{ refCurta() }}</span>
+        <!--
+          Sempre na tela e selecionável: se a área de transferência falhar, copiar à mão é a única
+          saída, e para isso o endereço tem de estar visível (research D11).
+        -->
+        <p class="endereco" data-testid="endereco">{{ enderecoExibido() }}</p>
+
+        @if (copiado()) {
+          <p class="dica ok" data-testid="copia-ok">Endereço copiado.</p>
+        }
+        @if (erroCopia()) {
+          <p class="dica aviso" data-testid="copia-erro">
+            Não foi possível copiar. O endereço completo está acima, para selecionar à mão.
+          </p>
+        }
+
+        <div class="acoes-qr">
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            data-testid="baixar-qr"
+            (click)="baixarQr()"
+          >
+            Baixar QR
+          </button>
+          <button
+            pButton
+            type="button"
+            variant="text"
+            size="small"
+            data-testid="copiar-endereco"
+            (click)="aoCopiar()"
+          >
+            Copiar endereço
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="indicadores">
+      <div class="indicador">
+        <span class="rotulo">Acumulado</span>
+        <strong class="valor" data-testid="indicador-litros">{{ litrosFormatado() }}</strong>
+      </div>
+      <div class="indicador">
+        <span class="rotulo">Fundo social</span>
+        <strong class="valor" data-testid="indicador-fundo-social">{{ fundoSocialFormatado() }}</strong>
+      </div>
+      <div class="indicador">
+        <span class="rotulo">Média por coleta</span>
+        <strong class="valor" data-testid="indicador-media">{{ mediaFormatada() }}</strong>
+      </div>
+    </div>
+
+    <section class="bloco">
+      <h3 class="secao">Local</h3>
+      <p class="local-nome" data-testid="local-nome">{{ localNome() }}</p>
+      @if (carregandoLocal()) {
+        <p class="dica" data-testid="local-carregando">Abrindo a ficha do local…</p>
+      }
+      @if (erroLocal()) {
+        <!-- Aviso aqui, e não painel vazio empilhado: um painel sem conteúdo pareceria travado. -->
+        <p class="dica aviso" data-testid="local-erro">
+          Não foi possível carregar a ficha deste local.
+        </p>
+      }
+    </section>
+
+    <section class="bloco">
+      <h3 class="secao">Histórico de coletas</h3>
+
+      @if (carregandoColetas()) {
+        <p class="dica" data-testid="historico-carregando">Carregando coletas…</p>
+      } @else if (erroColetas()) {
+        <!-- Aviso, não erro de tela: só esta seção ficou sem dado; o resto do painel segue útil. -->
+        <p class="dica aviso" data-testid="historico-erro">
+          Não foi possível carregar o histórico de coletas desta estação.
+        </p>
+      } @else if (historico().length === 0) {
+        <p class="dica" data-testid="historico-vazio">Nenhuma coleta registrada nesta estação.</p>
+      } @else {
+        <ul class="coletas">
+          @for (item of historico(); track item.id) {
+            <li class="coleta">
+              <span class="data">{{ dataBr(item.data) }}</span>
+              @if (item.coletorNome) {
+                <span class="coletor">{{ item.coletorNome }}</span>
+              } @else {
+                <!-- Espaço vazio pareceria falha de carregamento; a ausência é dita (FR-036). -->
+                <span class="coletor ausente" data-testid="coletor-ausente">
+                  Coletor não informado
+                </span>
+              }
+              <strong class="litros">{{ litrosDaColeta(item) }}</strong>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <!--
+    Filho direto do painel de propósito: o seletor `[acoes]` do `ng-content` casa com nós estáticos,
+    e um `@if` em volta empacotaria o rodapé num `ng-template` que casaria com o slot do corpo. Por
+    isso as ações são desabilitadas por binding quando não há estação, em vez de removidas.
+  -->
+  <div acoes class="rodape">
+    <button
+      pButton
+      type="button"
+      severity="danger"
+      variant="text"
+      data-testid="alternar-arquivamento"
+      [disabled]="!ponto()"
+      (click)="aoAlternarArquivamento()"
+    >
+      {{ rotuloArquivamento() }}
+    </button>
+    <div class="principais">
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        variant="text"
+        data-testid="ver-local"
+        [disabled]="!ponto() || carregandoLocal()"
+        (click)="verLocal()"
+      >
+        Ver local
+      </button>
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        variant="outlined"
+        data-testid="editar"
+        [disabled]="!ponto()"
+        (click)="aoEditar()"
+      >
+        Editar referência
+      </button>
+      <button
+        pButton
+        type="button"
+        data-testid="registrar-coleta"
+        [disabled]="!ponto()"
+        (click)="registrarColeta()"
+      >
+        Registrar coleta
+      </button>
+    </div>
+  </div>
+</app-form-drawer>
+
+<!--
+  Ficha do Local empilhada: fica por cima desta, que permanece aberta atrás (FR-037). Declarada fora
+  do `app-form-drawer` de propósito — dentro dele seria projetada no corpo desta ficha e rolaria com
+  o conteúdo, em vez de ser uma camada própria.
+
+  Só existe depois de o local ter sido buscado: a ficha do Local traz dentro dela o painel de
+  cadastro de estação, que carrega a lista de locais ao ser construído. Montá-la de saída faria toda
+  ficha de estação pagar uma consulta por um painel que talvez ninguém abra.
+
+  Litros e valor social do Local não são passados: aquele agregado é buscado pela visão geral de
+  Locais, e a ficha exibe ausência em vez de zero quando não o recebe. Editar e arquivar o Local
+  também não são ligados — são escritas da tela de Locais, que é quem recarrega aquelas listas; a
+  partir de uma estação a ficha do Local é consulta.
+-->
+@if (local()) {
+  <!--
+    Um nível acima desta ficha: o recuo é o que revela a borda da ficha da estação atrás. Sem ele as
+    duas sairiam com a mesma largura e a de cima cobriria a de baixo por inteiro (FR-044).
+  -->
+  <app-local-detalhe
+    [visivel]="localVisivel()"
+    (visivelChange)="localVisivel.set($event)"
+    [local]="local()"
+    [nivel]="1"
+  />
+}

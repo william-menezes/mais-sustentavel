@@ -1,12 +1,16 @@
 package br.com.maissustentavel.api.ponto.web;
 
 import br.com.maissustentavel.api.ponto.service.PontoService;
+import br.com.maissustentavel.api.ponto.web.dto.PontoRequest;
 import br.com.maissustentavel.api.ponto.web.dto.PontoResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,8 +33,9 @@ public class PontoController {
     }
 
     @PostMapping("/api/locais/{localId}/pontos")
-    public ResponseEntity<PontoResponse> cadastrar(@PathVariable UUID localId) {
-        PontoResponse criado = servico.criar(localId);
+    public ResponseEntity<PontoResponse> cadastrar(@PathVariable UUID localId,
+                                                   @Valid @RequestBody PontoRequest requisicao) {
+        PontoResponse criado = servico.criar(localId, requisicao);
         return ResponseEntity.created(URI.create("/api/pontos/" + criado.id())).body(criado);
     }
 
@@ -48,6 +53,15 @@ public class PontoController {
     public List<PontoResponse> listarTodos(
             @RequestParam(name = "arquivados", defaultValue = "false") boolean arquivados) {
         return servico.listarTodos(arquivados);
+    }
+
+    /**
+     * Corrige a referência da estação. O corpo é o mesmo do cadastro e **não** tem local: a estação
+     * não muda de local (RN-G-05), então não há rota para tentar.
+     */
+    @PutMapping("/api/pontos/{id}")
+    public PontoResponse editar(@PathVariable UUID id, @Valid @RequestBody PontoRequest requisicao) {
+        return servico.editar(id, requisicao);
     }
 
     @GetMapping(value = "/api/pontos/{id}/qr", produces = MediaType.IMAGE_PNG_VALUE)

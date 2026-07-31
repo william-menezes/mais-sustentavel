@@ -3,57 +3,232 @@
 <section class="pagina-pontos">
   <header class="cabecalho">
     <div class="titulo">
-      <a routerLink="/locais" class="voltar">← Locais</a>
       <h1>Pontos de coleta</h1>
-      <p>Estações físicas deste local, cada uma com seu QR Code único.</p>
+      <p data-testid="contador">{{ exibidos() }} de {{ linhas().length }} estações</p>
     </div>
-    <button pButton type="button" (click)="novoPonto()" [disabled]="criando()">
-      {{ criando() ? 'Criando…' : 'Novo ponto' }}
+    <button pButton type="button" data-testid="nova-estacao" (click)="novaEstacao()">
+      Nova estação
     </button>
   </header>
 
   <div class="barra">
+    <span id="rotulo-visao" class="rotulo-visao">Visualização</span>
     <p-selectbutton
       [options]="opcoesVisao"
       optionLabel="label"
       optionValue="value"
       [allowEmpty]="false"
-      [ngModel]="verArquivados()"
-      (ngModelChange)="mudarVisao($event)"
+      [ngModel]="visao()"
+      (ngModelChange)="visao.set($event)"
+      ariaLabelledBy="rotulo-visao"
     />
   </div>
 
-  <p-table [value]="pontos()" dataKey="id" [loading]="carregando()" [tableStyle]="{ 'min-width': '40rem' }">
+  <!--
+    Uma única tabela é dona dos dados, do filtro e da ordenação nos DOIS modos (research D6): o modo
+    cartões troca apenas como o corpo é desenhado. Com duas árvores independentes o estado de filtro
+    teria de ser sincronizado à mão entre elas, e estado duplicado diverge.
+
+    `filterDisplay` acompanha a tela de Locais, mas quem de fato põe o filtro em menu é o
+    `display="menu"` de cada `p-column-filter` abaixo: na versão instalada do PrimeNG a `p-table` não
+    declara esse input, então aqui ele é só um atributo estático. Mexer nele não muda nada.
+  -->
+  <p-table
+    #tabela
+    [value]="linhas()"
+    dataKey="id"
+    [loading]="carregando()"
+    filterDisplay="menu"
+    [filters]="filtrosIniciais"
+    [tableStyle]="visao() === 'tabela' ? { 'min-width': '44rem' } : {}"
+  >
     <ng-template #header>
       <tr>
-        <th scope="col" style="width: 7rem">QR</th>
-        <th scope="col">Referência</th>
-        <th scope="col">Criado em</th>
-        <th scope="col" style="width: 16rem">Ações</th>
+        <th scope="col" pSortableColumn="localNome">
+          <div class="coluna">
+            Local
+            <p-sort-icon field="localNome" />
+            <p-column-filter type="text" field="localNome" display="menu" />
+          </div>
+        </th>
+        <th scope="col" pSortableColumn="titulo">
+          <div class="coluna">
+            Referência
+            <p-sort-icon field="titulo" />
+            <p-column-filter type="text" field="titulo" display="menu" />
+          </div>
+        </th>
+        <th scope="col">
+          <div class="coluna">
+            Situação
+            <p-column-filter
+              field="situacao"
+              matchMode="equals"
+              display="menu"
+              [showMatchModes]="false"
+              [showOperator]="false"
+              [showAddButton]="false"
+            >
+              <ng-template #filter let-value let-filter="filterCallback">
+                <p-select
+                  [ngModel]="value"
+                  [options]="opcoesSituacao"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Todos"
+                  [showClear]="true"
+                  appendTo="body"
+                  (onChange)="filter($event.value)"
+                />
+              </ng-template>
+            </p-column-filter>
+          </div>
+        </th>
+        <th scope="col" class="coluna-acoes"></th>
       </tr>
     </ng-template>
-    <ng-template #body let-ponto>
+
+    <ng-template #body let-linha let-indice="rowIndex">
+      @if (visao() === 'tabela') {
+        <tr>
+          <td>{{ linha.localNome }}</td>
+          <td>
+            <span class="estacao">{{ linha.titulo }}</span>
+            <span class="ref-curta">{{ linha.refCurta }}</span>
+          </td>
+          <td>
+            @if (linha.arquivado) {
+              <p-tag value="Arquivado" severity="secondary" />
+            } @else {
+              <p-tag value="Ativo" severity="success" />
+            }
+          </td>
+          <td>
+            <button
+              pButton
+              type="button"
+              severity="secondary"
+              variant="text"
+              aria-label="Ações da estação"
+              data-testid="acoes"
+              (click)="abrirAcoes($event, linha)"
+            >
+              ⋮
+            </button>
+          </td>
+        </tr>
+      } @else if (indice === 0) {
+        <!--
+          Modo cartões: uma linha, uma célula, e a grade dentro dela — alimentada pelo
+          `filteredValue` da própria tabela, então obedece aos mesmos funis do cabeçalho. O `@if` no
+          primeiro índice é o que impede o corpo de repetir a grade por linha.
+        -->
+        <tr class="linha-cartoes">
+          <td [attr.colspan]="COLUNAS">
+            <ul class="grade" data-testid="grade-cartoes">
+              @for (estacao of exibidas(); track estacao.id) {
+                <li class="cartao">
+                  <div class="topo">
+                    <span class="ref-curta">{{ estacao.refCurta }}</span>
+                    @if (estacao.arquivado) {
+                      <p-tag value="Arquivado" severity="secondary" />
+                    } @else {
+                      <p-tag value="Ativo" severity="success" />
+                    }
+                    <button
+                      pButton
+                      type="button"
+                      severity="secondary"
+                      variant="text"
+                      aria-label="Ações da estação"
+                      data-testid="acoes"
+                      (click)="abrirAcoes($event, estacao)"
+                    >
+                      ⋮
+                    </button>
+                  </div>
+                  <img
+                    class="qr"
+                    [src]="qrUrl(estacao.id)"
+                    [alt]="'QR da estação ' + estacao.refCurta"
+                    width="96"
+                    height="96"
+                  />
+                  <h2 class="estacao">{{ estacao.titulo }}</h2>
+                  <p class="local">{{ estacao.localNome }}</p>
+                </li>
+              }
+            </ul>
+          </td>
+        </tr>
+      }
+    </ng-template>
+
+    <ng-template #emptymessage>
       <tr>
-        <td>
-          <img [src]="qrUrl(ponto.id)" [alt]="'QR do ponto ' + ref(ponto.id)" class="qr" width="72" height="72" />
-        </td>
-        <td><span class="mono">{{ ref(ponto.id) }}</span></td>
-        <td>{{ ponto.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
-        <td class="acoes">
-          <button pButton type="button" severity="secondary" variant="text" (click)="verColetas(ponto)">Coletas</button>
-          <button pButton type="button" severity="secondary" variant="text" (click)="baixarQr(ponto)">Baixar QR</button>
-          @if (ponto.arquivado) {
-            <button pButton type="button" severity="secondary" variant="text" (click)="reativar(ponto)">Reativar</button>
+        <td [attr.colspan]="COLUNAS" class="vazio">
+          @if (linhas().length === 0) {
+            <span data-testid="vazio-sem-cadastro">Nenhuma estação cadastrada ainda.</span>
+            <button
+              pButton
+              type="button"
+              variant="text"
+              data-testid="cadastrar-primeira"
+              (click)="novaEstacao()"
+            >
+              Cadastrar a primeira estação
+            </button>
           } @else {
-            <button pButton type="button" severity="secondary" variant="text" (click)="arquivar(ponto)">Arquivar</button>
+            <!-- Há estações carregadas, então o vazio é do filtro — mensagem e saída próprias (FR-009). -->
+            <span data-testid="vazio-por-filtro">Nenhuma estação corresponde ao filtro aplicado.</span>
+            <button pButton type="button" variant="text" (click)="limparFiltros()">Limpar filtros</button>
           }
         </td>
       </tr>
     </ng-template>
-    <ng-template #emptymessage>
-      <tr>
-        <td colspan="4" class="vazio">Nenhum ponto {{ verArquivados() ? 'arquivado' : 'ativo' }} neste local.</td>
-      </tr>
-    </ng-template>
   </p-table>
 </section>
+
+<!-- Um único menu para todas as estações: os itens são montados no clique, conforme a situação. -->
+<p-menu #menuAcoes [model]="acoes()" [popup]="true" appendTo="body" />
+
+<!--
+  Cadastro aberto da lista: sem local escolhido (aqui a tela é de todos os locais, e o painel pergunta
+  qual) e no nível de base, porque não há painel nenhum atrás dele.
+
+  Com `estacao` preenchida o mesmo painel corrige a referência daquela estação (FR-039), sem oferecer
+  troca de local — o vínculo é imutável (RN-G-05).
+
+  Criar e corrigir apenas recarregam a lista. O aviso de sucesso é do próprio painel — na criação ele
+  vem junto do QR gerado, a razão de alguém cadastrar uma estação; um segundo toast desta página
+  empilharia a mesma notícia sobre aquela.
+-->
+<app-ponto-form
+  [visivel]="formVisivel()"
+  (visivelChange)="formVisivel.set($event)"
+  [local]="null"
+  [estacao]="emEdicao()"
+  [nivel]="0"
+  (criado)="carregar()"
+  (editado)="carregar()"
+/>
+
+<!--
+  Ficha de leitura, alimentada pela linha que a abriu: a listagem já trouxe referência, local,
+  situação e conteúdo do QR, e não existe `GET /api/pontos/{id}` (research D13).
+
+  Editar, arquivar e reativar caem nos fluxos desta página, que já concentram toast, erro e recarga.
+  A ficha se fecha antes de emitir — recebendo a estação por input, ela continuaria mostrando a
+  situação ou a referência anteriores — e o fechamento chega aqui pelo `visivelChange`, como na ficha
+  de Local.
+
+  `(editar)` leva ao mesmo `editar` do menu da linha: um único caminho para corrigir a referência.
+-->
+<app-ponto-detalhe
+  [visivel]="detalheVisivel()"
+  (visivelChange)="detalheVisivel.set($event)"
+  [ponto]="emDetalhe()"
+  (editar)="editar($event)"
+  (arquivar)="arquivar($event)"
+  (reativar)="reativar($event)"
+/>

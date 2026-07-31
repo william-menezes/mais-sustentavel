@@ -26,10 +26,36 @@ Entrar como Gestor em `http://localhost:4200`.
 Testes automatizados, antes de olhar a tela:
 
 ```bash
-docker compose run --rm api mvn verify     # backend, em container
 cd frontend && npx ng test --watch=false   # frontend
 cd frontend && npm run build               # sem estouro de orçamento
 ```
+
+### Rodando a suíte do backend neste host
+
+Java vive só no Docker (Art. 1.6) e por um tempo se acreditou que **Testcontainers não rodasse aqui**,
+porque ele tenta o socket Unix local e o Docker Desktop no Windows recusa a conexão aninhada. A saída é
+**montar o socket** e dizer ao Testcontainers em que host o Docker responde:
+
+```bash
+docker run --rm \
+  -v "<caminho-absoluto>/api:/app" \
+  -v mais-sustentavel-m2:/root/.m2 \
+  -v //var/run/docker.sock:/var/run/docker.sock \
+  -w /app \
+  -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
+  --add-host=host.docker.internal:host-gateway \
+  maven:3.9-eclipse-temurin-21 mvn -B verify
+```
+
+No PowerShell, obtenha o caminho com `(Resolve-Path .\api).Path` — no Git Bash a conversão automática de
+caminho quebra o `-v` e o `-w`. O volume `mais-sustentavel-m2` guarda as dependências entre execuções;
+sem ele cada execução baixa tudo de novo.
+
+Para só compilar (Red de assinatura, muito mais rápido), troque `verify` por `test-compile` e dispense o
+socket.
+
+**Isso substitui a espera pelo CI** para verificar o backend. Vale saber que a descoberta é recente: as
+primeiras fatias desta feature foram verificadas só por compilação, confiando no CI para a suíte.
 
 ---
 

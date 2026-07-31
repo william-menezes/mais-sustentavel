@@ -1,0 +1,70 @@
+<!--
+  Busca no acervo já carregado, sem consulta por tecla (D7). `dropdown` porque quem não sabe o nome
+  exato precisa poder ver a lista; `forceSelection` fica desligado de propósito — o texto que não
+  casa com nada é o que dispara a oferta de cadastrar o local (FR-042), e apagá-lo no blur esconderia
+  justamente o gatilho da US5.
+-->
+<p-autocomplete
+  [inputId]="inputId()"
+  [ngModel]="valorCampo()"
+  (ngModelChange)="aoMudarCampo($event)"
+  [suggestions]="sugestoes()"
+  (completeMethod)="filtrar($event)"
+  optionLabel="nome"
+  [placeholder]="placeholder()"
+  [dropdown]="true"
+  emptyMessage="Nenhum local encontrado."
+  scrollHeight="14rem"
+  fluid
+>
+  <ng-template #item let-opcao>
+    <div class="opcao">
+      <span class="nome">{{ opcao.nome }}</span>
+      @if (detalhe(opcao)) {
+        <small class="detalhe">{{ detalhe(opcao) }}</small>
+      }
+    </div>
+  </ng-template>
+</p-autocomplete>
+
+@if (erroAoCarregar()) {
+  <!-- Aviso, não erro de tela: o campo continua digitável e o cadastro de local segue disponível. -->
+  <small class="dica aviso" data-testid="erro-locais">
+    Não foi possível carregar os locais. Feche e abra o painel para tentar de novo.
+  </small>
+} @else if (semResultado()) {
+  <!--
+    A oferta é um botão de verdade abaixo do campo, e não um item dentro da lista de sugestões: um
+    controle acionável dentro de um `role="option"` quebra a semântica do listbox e some com a lista
+    ao perder o foco — exatamente quando a pessoa vai clicar nele.
+  -->
+  <div class="sem-resultado" data-testid="sem-resultado">
+    <small class="dica">Nenhum local encontrado para “{{ consulta() }}”.</small>
+    <button
+      pButton
+      type="button"
+      variant="text"
+      size="small"
+      data-testid="adicionar-local"
+      (click)="abrirNovoLocal()"
+    >
+      + Adicionar local
+    </button>
+  </div>
+}
+
+<!--
+  O formulário de Local é **o mesmo** já existente (FR-048), aberto sobre o painel que hospeda este
+  campo (FR-043). Fica fora do `p-autocomplete` de propósito: é uma camada própria, não um item da
+  lista de sugestões, que desapareceria com a lista.
+
+  O `nivel` é um acima do painel que hospeda este campo: é o recuo que revela a borda do painel de
+  baixo (FR-044). Sem ele os dois sairiam com a mesma largura e se sobreporiam exatamente, fazendo o
+  de baixo desaparecer aos olhos de quem precisa voltar para ele.
+-->
+<app-local-form
+  [visivel]="formularioVisivel()"
+  (visivelChange)="formularioVisivel.set($event)"
+  [nivel]="nivelDoFormulario()"
+  (salvo)="aoSalvarLocal($event)"
+/>
