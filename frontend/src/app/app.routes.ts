@@ -1,28 +1,42 @@
 import { Routes } from '@angular/router';
+import { autenticacaoGuard } from '@core/guards/autenticacao/autenticacao.guard';
 
 export const routes: Routes = [
+  // Vitrine pública, sem a casca administrativa.
   {
     path: '',
-    loadComponent: () => import('./home/home').then((m) => m.Home),
+    pathMatch: 'full',
+    loadComponent: () => import('@core/pages/home/home.page').then((m) => m.Home),
   },
   {
     path: 'login',
-    loadComponent: () => import('./auth/login/login').then((m) => m.Login),
+    loadChildren: () => import('@domain/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },
   {
-    path: 'painel',
-    loadComponent: () => import('./painel/painel').then((m) => m.Painel),
-  },
-  {
-    path: 'locais',
-    loadComponent: () => import('./local/local-list/local-list').then((m) => m.LocalList),
-  },
-  {
-    path: 'locais/:localId/pontos',
-    loadComponent: () => import('./ponto/ponto-list/ponto-list').then((m) => m.PontoList),
-  },
-  {
-    path: 'pontos/:pontoId/coletas',
-    loadComponent: () => import('./coleta/coleta-list/coleta-list').then((m) => m.ColetaList),
+    // Área administrativa: a casca (sidebar + header) hospeda as páginas dos domínios
+    // no seu <router-outlet>. Cada domínio traz o próprio arquivo de rotas.
+    path: '',
+    loadComponent: () => import('@core/layout/painel/painel.layout').then((m) => m.PainelLayout),
+    canActivate: [autenticacaoGuard],
+    children: [
+      {
+        path: 'painel',
+        loadChildren: () => import('@domain/impacto/impacto.routes').then((m) => m.IMPACTO_ROUTES),
+      },
+      // As rotas aninhadas vêm antes das coleções para casarem primeiro
+      // ('locais/:localId/pontos' compartilha o prefixo 'locais').
+      {
+        path: 'locais/:localId/pontos',
+        loadChildren: () => import('@domain/ponto/ponto.routes').then((m) => m.PONTO_ROUTES),
+      },
+      {
+        path: 'pontos/:pontoId/coletas',
+        loadChildren: () => import('@domain/coleta/coleta.routes').then((m) => m.COLETA_ROUTES),
+      },
+      {
+        path: 'locais',
+        loadChildren: () => import('@domain/local/local.routes').then((m) => m.LOCAL_ROUTES),
+      },
+    ],
   },
 ];
