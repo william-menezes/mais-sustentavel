@@ -1,6 +1,7 @@
 package br.com.maissustentavel.api.ponto;
 
 import br.com.maissustentavel.api.TestcontainersConfiguration;
+import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
@@ -37,7 +38,7 @@ class PontoRepositoryTest {
     private Local local() {
         Local l = new Local();
         l.setNome("Local");
-        l.setEndereco("Rua X, 1");
+        LocalFixture.comEnderecoValido(l);
         l.setTipo(TipoLocal.ESCOLA);
         return localRepository.saveAndFlush(l);
     }

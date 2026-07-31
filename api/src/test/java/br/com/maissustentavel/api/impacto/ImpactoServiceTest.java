@@ -8,6 +8,7 @@ import br.com.maissustentavel.api.impacto.service.PeriodoInvalidoException;
 import br.com.maissustentavel.api.impacto.web.dto.ValorSocialLocalResponse;
 import br.com.maissustentavel.api.impacto.web.dto.ValorSocialMensalResponse;
 import br.com.maissustentavel.api.impacto.web.dto.ValorSocialResponse;
+import br.com.maissustentavel.api.local.LocalFixture;
 import br.com.maissustentavel.api.local.domain.Local;
 import br.com.maissustentavel.api.local.domain.TipoLocal;
 import br.com.maissustentavel.api.local.repository.LocalRepository;
@@ -57,7 +58,7 @@ class ImpactoServiceTest {
     private Ponto ponto(String nomeLocal) {
         Local l = new Local();
         l.setNome(nomeLocal);
-        l.setEndereco("Rua X, 1");
+        LocalFixture.comEnderecoValido(l);
         l.setTipo(TipoLocal.ESCOLA);
         localRepository.saveAndFlush(l);
         Ponto p = new Ponto();

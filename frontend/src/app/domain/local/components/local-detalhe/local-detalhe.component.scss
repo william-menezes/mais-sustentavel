@@ -1,0 +1,162 @@
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* Três indicadores lado a lado; em tela estreita cabem dois por linha antes de empilhar. */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+@media (max-width: 380px) {
+  .indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.indicador .rotulo {
+  font-size: 12px;
+  color: var(--color-slate);
+}
+
+.indicador .valor {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--color-ink);
+  /* Valores longos não devem estourar o cartão nem provocar rolagem horizontal no painel. */
+  overflow-wrap: anywhere;
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.secao {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+
+.titulo-secao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.endereco {
+  margin: 0;
+  color: var(--color-ink);
+}
+
+.cep {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-slate);
+}
+
+/* Caixa de reserva do mapa: fundo sutil e sem moldura chamativa, para não parecer conteúdo real. */
+.mapa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8rem;
+  margin-top: var(--space-xxs);
+  border: 1px dashed var(--color-hairline);
+  border-radius: 12px;
+  background: var(--color-surface-soft);
+  font-size: 14px;
+  color: var(--color-steel);
+}
+
+.pontos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ponto {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: 10px;
+  background: var(--color-canvas);
+}
+
+/* Monoespaçada porque a referência curta é um identificador: alinha e evita ler 0 como O. */
+.ponto .ref {
+  font-family: ui-monospace, 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.ponto .criado {
+  margin-right: auto;
+  font-size: 14px;
+  color: var(--color-slate);
+}
+
+.dica {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-slate);
+}
+
+.dica.aviso {
+  color: var(--color-amber, #9a6b00);
+}
+
+/* Arquivar/Reativar isolado à esquerda; as ações de avanço juntas à direita. */
+.rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.rodape .principais {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Em tela estreita o painel sobe de baixo e ocupa a largura toda: ações empilhadas e de toque fácil. */
+@media (max-width: 767px) {
+  .rodape {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .rodape .principais {
+    flex-direction: column-reverse;
+  }
+
+  .rodape button {
+    width: 100%;
+  }
+}
