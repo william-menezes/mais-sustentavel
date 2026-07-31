@@ -4,6 +4,8 @@ import br.com.maissustentavel.api.auth.domain.Papel;
 import br.com.maissustentavel.api.auth.domain.Usuario;
 import br.com.maissustentavel.api.auth.repository.PapelRepository;
 import br.com.maissustentavel.api.auth.repository.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.env.Environment;
@@ -18,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 public class GestorSeeder implements ApplicationRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(GestorSeeder.class);
 
     private final UsuarioRepository usuarioRepository;
     private final PapelRepository papelRepository;
@@ -38,9 +42,14 @@ public class GestorSeeder implements ApplicationRunner {
         String email = environment.getProperty("SEED_GESTOR_EMAIL");
         String senha = environment.getProperty("SEED_GESTOR_SENHA");
         if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
-            return; // sem variáveis de ambiente, nada a semear
+            // Log explícito: um seed silencioso deixa o ambiente sem nenhuma conta e
+            // sem pista do motivo (só se descobre ao tentar logar).
+            log.warn("Gestor inicial NÃO semeado: defina SEED_GESTOR_EMAIL e SEED_GESTOR_SENHA "
+                    + "no ambiente para criar a primeira conta.");
+            return;
         }
         if (usuarioRepository.existsByEmail(email)) {
+            log.info("Gestor inicial já existe ({}); seed ignorado.", email);
             return; // idempotente: já existe
         }
         Papel gestor = papelRepository.findByNome("Gestor")
@@ -51,5 +60,6 @@ public class GestorSeeder implements ApplicationRunner {
         usuario.setSenhaHash(passwordEncoder.encode(senha));
         usuario.getPapeis().add(gestor);
         usuarioRepository.save(usuario);
+        log.info("Gestor inicial criado: {}", email); // nunca logar a senha
     }
 }

@@ -2,17 +2,18 @@ package br.com.maissustentavel.api.ponto;
 
 import br.com.maissustentavel.api.ponto.service.GeradorQrCode;
 import com.google.zxing.BinaryBitmap;
-import com.google.zxing.MultiFormatReader;
+import com.google.zxing.DecodeHintType;
 import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.qrcode.QRCodeReader;
 import org.junit.jupiter.api.Test;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
-import java.util.UUID;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,11 +25,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class GeradorQrCodeTest {
 
+    /**
+     * A imagem gerada é um QR "puro": renderizado, alinhado ao pixel, sem foto nem
+     * perspectiva. O hint {@code PURE_BARCODE} faz o ZXing ler a grade de módulos
+     * diretamente, em vez de rodar a detecção de padrões de localização — que é
+     * pensada para fotos e falha em cerca de 2% dos conteúdos, tornando o teste
+     * intermitente (`NotFoundException` esporádico no CI).
+     */
+    private static final Map<DecodeHintType, Object> QR_PURO =
+            Map.of(DecodeHintType.PURE_BARCODE, Boolean.TRUE);
+
     private final GeradorQrCode gerador = new GeradorQrCode();
 
     @Test
     void geraPngDecodificavelComOConteudo() throws Exception {
-        String conteudo = "http://localhost:4200/p/" + UUID.randomUUID();
+        // Id fixo em vez de UUID.randomUUID(): o que se verifica aqui é fidelidade, e
+        // sortear o conteúdo a cada execução só reintroduziria não-determinismo.
+        String conteudo = "http://localhost:4200/p/3f2b7c14-9d5a-4e6b-8f10-2c7a5b9e1d34";
 
         byte[] png = gerador.gerarPng(conteudo);
 
@@ -38,7 +51,7 @@ class GeradorQrCodeTest {
 
         BufferedImage imagem = ImageIO.read(new ByteArrayInputStream(png));
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(new BufferedImageLuminanceSource(imagem)));
-        Result resultado = new MultiFormatReader().decode(bitmap);
+        Result resultado = new QRCodeReader().decode(bitmap, QR_PURO);
         assertEquals(conteudo, resultado.getText());
     }
 

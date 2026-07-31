@@ -13,7 +13,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
-import { autenticacaoErroInterceptor } from './core/auth-erro.interceptor';
+import { autenticacaoErroInterceptor } from '@core/interceptors/autenticacao-erro/autenticacao-erro.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
