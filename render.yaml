@@ -5,7 +5,10 @@
 
 services:
   - type: web
-    name: mais-sustentavel-api
+    # Este nome define o host público (<name>.onrender.com) e é a chave que a Render
+    # usa para casar o blueprint com o serviço existente. Precisa ser exatamente o
+    # nome do serviço já criado, senão aplicar o blueprint cria um segundo serviço.
+    name: mais-sustentavel
     runtime: docker
     plan: free
     region: oregon
