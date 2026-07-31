@@ -80,11 +80,12 @@ cd frontend && npm run build               # sem estouro de orçamento
 
 1. Abrir a ficha de uma estação **com coletas**.
 2. Conferir os três indicadores contra o histórico logo abaixo:
-   - o total é a **soma dos litros listados**;
+   - o total tem de bater com a **soma das linhas listadas** — ele vem somado do servidor, então este
+     passo confere se a resposta e a lista falam do mesmo ponto;
    - o valor social é esse total a **R$ 1,00 por litro** (RN-G-02);
-   - a média é o total dividido pela **quantidade de coletas**.
-   - **Somar à mão as linhas do histórico e comparar.** É o SC-007, e é o que a decisão D5 garante por
-     construção: os números vêm da mesma consulta que a lista.
+   - a média é o total dividido pela **quantidade de coletas** — a única conta feita na tela.
+   - **Somar à mão as linhas do histórico e comparar.** É o SC-007, e a decisão D5 o garante por
+     construção: os três números vêm da mesma resposta que alimenta a lista.
 3. Localizar a coleta **sem coletor informado**.
    - A linha tem de indicar a ausência, não deixar o espaço vazio (FR-036, SC-009). Espaço vazio
      pareceria falha de carregamento.

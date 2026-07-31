@@ -141,14 +141,15 @@ diz a verdade — `referencia: null` — e a tela decide o que mostrar no lugar.
 referência curta preenchida, ninguém saberia mais quais estações ainda precisam ser nomeadas, e a
 consulta da fila de trabalho da V7 deixaria de bater com a tela.
 
-### `IndicadoresDaEstacao` (derivada do histórico)
+### `IndicadoresDaEstacao` (montada da resposta de coletas)
 
-Calculada no cliente a partir da lista de coletas, nunca buscada pronta ([research.md](research.md) D5).
+A consulta de coletas já devolve `ColetasDoPonto { totalLitros, coletas }`, com o total somado no
+servidor. Só a média é derivada no cliente ([research.md](research.md) D5).
 
 ```text
-litros        number          soma dos litros reais
-valorSocial   number          litros × 1 (RN-G-02)
-media         number | null   litros ÷ quantidade; null sem nenhuma coleta
+litros        number          totalLitros, direto da resposta — NÃO somado no cliente
+valorSocial   number          totalLitros × 1 (RN-G-02)
+media         number | null   totalLitros ÷ coletas.length; null quando não há coleta
 ```
 
 **`media` é `null`, não `0`, sem coletas** (FR-034). Zero afirmaria que as coletas vieram vazias. É a

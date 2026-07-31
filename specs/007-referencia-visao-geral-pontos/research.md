@@ -98,20 +98,28 @@ plano. O único consumidor é o frontend deste repositório, publicado no mesmo 
 
 ## D5 — Indicadores da ficha: derivados no cliente, do histórico
 
-**Decisão.** A ficha faz **uma** consulta — `GET /api/pontos/{id}/coletas` — e deriva os três
-indicadores dela: total de litros (soma), valor social (total × R$ 1,00, RN-G-02) e média por coleta
-(total ÷ quantidade). Nenhum agregado novo no servidor.
+**Decisão.** A ficha faz **uma** consulta — `GET /api/pontos/{id}/coletas` — e monta os três indicadores
+a partir dela. Nenhum agregado novo no servidor.
 
-**Justificativa.** O agregado por estação ficou fora de escopo por decisão do Gestor. Derivar do
-histórico, que a ficha já precisa buscar, tem uma vantagem que não é consolo: **os números não podem
-divergir do que está listado logo abaixo deles** — é o SC-007 satisfeito por construção, não por
-coincidência de duas consultas.
+**Correção sobre a suposição inicial.** Esta decisão foi escrita presumindo que a ficha teria de **somar
+os litros no cliente**. Ao conferir o código antes de gerar as tarefas, descobriu-se que o endpoint já
+devolve `ColetasDoPontoResponse(totalLitros, coletas)`, com o total calculado no servidor como
+`BigDecimal` — soma exata, zero quando não há coletas. A decisão fica, o mecanismo muda:
 
-**Precisão.** `litrosReais` é `BigDecimal` no servidor e chega como número em JSON. Somar em ponto
-flutuante acumula erro. Com litros na casa das centenas e duas decimais, o desvio é muito abaixo do
-que a exibição mostra; a formatação arredonda para exibir. Registrado como risco aceito, não como
-não-problema: se o dia vier em que litros precisem fechar centavo a centavo com contabilidade, a soma
-passa para o servidor.
+| Indicador | Origem |
+|---|---|
+| Total de litros | **Vem do servidor**, campo `totalLitros`. Não é somado no cliente |
+| Valor social | `totalLitros × R$ 1,00` (RN-G-02) |
+| Média por coleta | `totalLitros ÷ quantidade de coletas` — a **única** derivação real no cliente |
+
+**Justificativa.** O agregado por estação ficou fora de escopo por decisão do Gestor, mas a consulta que
+a ficha já precisa fazer para o histórico traz o total pronto. Isso tem uma vantagem que não é consolo:
+**os números não podem divergir do que está listado logo abaixo deles**, porque vêm da mesma resposta —
+é o SC-007 satisfeito por construção, não por coincidência de duas consultas.
+
+**Precisão deixa de ser risco relevante.** O total é soma exata feita no servidor. Sobra a divisão da
+média, arredondada apenas para exibir. Se a suposição inicial tivesse virado código, teríamos somado
+ponto flutuante no cliente para obter um número que já vinha correto.
 
 **Média sem coleta.** Sem coletas, a média não existe. FR-034 proíbe exibir zero — zero afirmaria que
 as coletas vieram vazias. Exibe marca de ausência, o mesmo tratamento que a 006 deu ao agregado
@@ -289,7 +297,7 @@ já tem o valor novo.
 
 | Risco | Mitigação |
 |---|---|
-| A soma de litros no cliente acumula erro de ponto flutuante | Escala atual está muito abaixo do que a exibição mostra; formatação arredonda. Se precisar fechar centavo, a soma vai para o servidor (D5) |
+| ~~A soma de litros no cliente acumula erro de ponto flutuante~~ | **Risco eliminado**: o total já vem somado do servidor em `BigDecimal`. Sobra a divisão da média, arredondada só para exibir (D5) |
 | Alternar visualização perde o filtro | Uma única tabela dona do estado; não existe segundo estado para divergir (D6) |
 | O filtro inicial corromper o painel do funil, como aconteceu na 006 | Filtro declarado pelo binding, nunca pela API imperativa (D6) |
 | Estação sem referência aparecer como título vazio | Referência curta como identificação de reserva, com teste (FR-013) |
