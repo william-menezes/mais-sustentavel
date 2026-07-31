@@ -223,8 +223,17 @@ export class LocalList implements OnInit, AfterViewInit {
     this.detalheVisivel.set(true);
   }
 
+  /**
+   * Leva à visão geral de estações já filtrada por este local (FR-008).
+   *
+   * <p>A tela de estações por local deixou de existir (research D8), e o que a substitui não é uma
+   * rota aninhada: é a mesma visão geral com o filtro da coluna Local semeado. Vai o **nome**, não o
+   * identificador, porque é o nome que a coluna filtra e é ele que aparece e se limpa no funil — um
+   * `localId` filtraria igual e seria um filtro invisível, com a lista reduzida e nenhuma coluna
+   * dizendo por quê. A chave `local` é o contrato de URL que a visão geral lê.
+   */
   protected verPontos(local: Local): void {
-    void this.router.navigate(['/locais', local.id, 'pontos']);
+    void this.router.navigate(['/pontos'], { queryParams: { local: local.nome } });
   }
 
   protected novo(): void {

@@ -24,14 +24,17 @@ export const routes: Routes = [
         loadChildren: () => import('@domain/impacto/impacto.routes').then((m) => m.IMPACTO_ROUTES),
       },
       // As rotas aninhadas vêm antes das coleções para casarem primeiro
-      // ('locais/:localId/pontos' compartilha o prefixo 'locais').
-      {
-        path: 'locais/:localId/pontos',
-        loadChildren: () => import('@domain/ponto/ponto.routes').then((m) => m.PONTO_ROUTES),
-      },
+      // ('pontos/:pontoId/coletas' compartilha o prefixo 'pontos').
       {
         path: 'pontos/:pontoId/coletas',
         loadChildren: () => import('@domain/coleta/coleta.routes').then((m) => m.COLETA_ROUTES),
+      },
+      {
+        // Visão geral de estações de todos os locais. O item já existia no menu lateral e não
+        // levava a lugar nenhum; substitui a antiga tela aninhada em 'locais/:localId/pontos',
+        // que agora é a mesma visão geral filtrada pelo local (research D8).
+        path: 'pontos',
+        loadChildren: () => import('@domain/ponto/ponto.routes').then((m) => m.PONTO_ROUTES),
       },
       {
         path: 'locais',

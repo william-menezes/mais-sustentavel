@@ -18,6 +18,7 @@ import { FormDrawer } from './form-drawer.component';
       [salvarDesabilitado]="desabilitado()"
       [closable]="fechavel()"
       [nivel]="nivel()"
+      [pendencia]="pendencia()"
       (salvar)="salvou = salvou + 1"
       (cancelar)="cancelou = cancelou + 1"
     >
@@ -30,6 +31,7 @@ class Hospedeiro {
   desabilitado = signal(false);
   fechavel = signal(false);
   nivel = signal(0);
+  pendencia = signal('');
   salvou = 0;
   cancelou = 0;
 }
@@ -38,7 +40,12 @@ class Hospedeiro {
 @Component({
   imports: [FormDrawer],
   template: `
-    <app-form-drawer [(visivel)]="visivel" titulo="Detalhe" [closable]="true">
+    <app-form-drawer
+      [(visivel)]="visivel"
+      titulo="Detalhe"
+      [closable]="true"
+      [pendencia]="pendencia()"
+    >
       <p>Detalhe</p>
       <div acoes>
         <button type="button" data-testid="acao-propria">Arquivar</button>
@@ -48,6 +55,7 @@ class Hospedeiro {
 })
 class HospedeiroComRodape {
   visivel = signal(true);
+  pendencia = signal('');
 }
 
 describe('FormDrawer', () => {
@@ -171,6 +179,38 @@ describe('FormDrawer', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="acao-propria"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="cancelar"]')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('[data-testid="salvar"]')).toBeFalsy();
+  });
+
+  // ---------- aviso de pendências ----------
+
+  it('não mostra aviso de pendência quando não há o que dizer', () => {
+    const fixture = configurar(true);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pendencia"]')).toBeFalsy();
+  });
+
+  it('mostra no rodapé o que falta preencher', () => {
+    const fixture = configurar(true);
+
+    fixture.componentInstance.pendencia.set('Falta preencher: tipo, CEP.');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pendencia"]')?.textContent).toContain(
+      'Falta preencher: tipo, CEP.',
+    );
+  });
+
+  it('mostra o aviso também para quem projeta o próprio rodapé', () => {
+    // É o motivo de o aviso ser renderizado ANTES do slot de ações, e não dentro do conteúdo de
+    // reserva: dentro da reserva, só quem usa Cancelar/Salvar o teria — a ficha e o painel de ponto
+    // projetam rodapé próprio e ficariam de fora.
+    const fixture = configurarComRodape();
+
+    fixture.componentInstance.pendencia.set('Escolha o local do ponto.');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pendencia"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="acao-propria"]')).toBeTruthy();
   });
 
   // ---------- recuo do empilhamento ----------

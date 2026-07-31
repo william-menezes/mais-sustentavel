@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import Aura from '@primeng/themes/aura';
 import { MessageService } from 'primeng/api';
@@ -7,6 +8,7 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { PontoService } from '@domain/ponto/apis/ponto.api';
+import { PontoForm } from '@domain/ponto/components/ponto-form/ponto-form.component';
 import { Ponto } from '@domain/ponto/interfaces/ponto.interface';
 import { LocalDetalhe } from './local-detalhe.component';
 import { Local } from '../../interfaces/local.interface';
@@ -66,6 +68,8 @@ const MIGRADO: Local = {
 const PONTO: Ponto = {
   id: '12345678-9abc-def0-1234-56789abcdef0',
   localId: COMPLETO.id,
+  localNome: COMPLETO.nome,
+  referencia: 'portaria',
   qrConteudo: 'conteudo',
   qrImagemUrl: '/api/pontos/1/qr',
   arquivado: false,
@@ -362,6 +366,31 @@ describe('LocalDetalhe', () => {
 
     expect(comp.pontoVisivel()).toBe(true);
     expect(comp.visivel()).toBe(true);
+  });
+
+  it('abre o cadastro de ponto com este local já escolhido', () => {
+    // Aberto pela ficha, o local é sabido: o painel não pode pedir de novo o que está na tela atrás.
+    const { fixture, comp } = abrir();
+
+    comp.aoNovoPonto();
+    fixture.detectChanges();
+    const painel = fixture.debugElement.query(By.directive(PontoForm))
+      .componentInstance as PontoForm;
+
+    expect(painel.local()).toEqual(COMPLETO);
+  });
+
+  it('abre o cadastro de ponto no nível de cima da pilha', () => {
+    // Esta ficha é o painel de base; o cadastro entra um nível acima, senão os dois se sobrepõem
+    // exatamente e o de baixo desaparece aos olhos de quem precisa voltar para ele (FR-044).
+    const { fixture, comp } = abrir();
+
+    comp.aoNovoPonto();
+    fixture.detectChanges();
+    const painel = fixture.debugElement.query(By.directive(PontoForm))
+      .componentInstance as PontoForm;
+
+    expect(painel.nivel()).toBe(1);
   });
 
   it('deixa os dois painéis na tela ao empilhar', () => {
