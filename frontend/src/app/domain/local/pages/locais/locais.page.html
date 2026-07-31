@@ -4,58 +4,161 @@
   <header class="cabecalho">
     <div class="titulo">
       <h1>Locais</h1>
-      <p>Instituições atendidas pela operação.</p>
+      <p data-testid="contador">{{ exibidos() }} de {{ linhas().length }} locais</p>
     </div>
     <button pButton type="button" (click)="novo()">Novo local</button>
   </header>
 
-  <div class="barra">
-    <p-selectbutton
-      [options]="opcoesVisao"
-      optionLabel="label"
-      optionValue="value"
-      [allowEmpty]="false"
-      [ngModel]="verArquivados()"
-      (ngModelChange)="mudarVisao($event)"
-    />
-  </div>
-
-  <p-table [value]="locais()" dataKey="id" [loading]="carregando()" [tableStyle]="{ 'min-width': '40rem' }">
+  <p-table
+    #tabela
+    [value]="linhas()"
+    dataKey="id"
+    [loading]="carregando()"
+    filterDisplay="menu"
+    [filters]="filtrosIniciais"
+    [tableStyle]="{ 'min-width': '48rem' }"
+  >
     <ng-template #header>
       <tr>
-        <th scope="col">Nome</th>
-        <th scope="col" style="width: 12rem">Tipo</th>
-        <th scope="col">Endereço</th>
-        <th scope="col" style="width: 14rem">Ações</th>
+        <th scope="col" pSortableColumn="nome">
+          <div class="coluna">
+            Local
+            <p-sort-icon field="nome" />
+            <p-column-filter type="text" field="nome" display="menu" />
+          </div>
+        </th>
+        <th scope="col" style="width: 12rem">
+          <div class="coluna">
+            Tipo
+            <p-column-filter
+              field="tipo"
+              matchMode="equals"
+              display="menu"
+              [showMatchModes]="false"
+              [showOperator]="false"
+              [showAddButton]="false"
+            >
+              <ng-template #filter let-value let-filter="filterCallback">
+                <p-select
+                  [ngModel]="value"
+                  [options]="opcoesTipo"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Todos"
+                  [showClear]="true"
+                  appendTo="body"
+                  (onChange)="filter($event.value)"
+                />
+              </ng-template>
+            </p-column-filter>
+          </div>
+        </th>
+        <th scope="col" style="width: 10rem" pSortableColumn="litros">
+          <div class="coluna">
+            Litros
+            <p-sort-icon field="litros" />
+            <p-column-filter type="numeric" field="litros" display="menu" />
+          </div>
+        </th>
+        <th scope="col" style="width: 11rem">
+          <div class="coluna">
+            Status
+            <p-column-filter
+              field="situacao"
+              matchMode="equals"
+              display="menu"
+              [showMatchModes]="false"
+              [showOperator]="false"
+              [showAddButton]="false"
+            >
+              <ng-template #filter let-value let-filter="filterCallback">
+                <p-select
+                  [ngModel]="value"
+                  [options]="opcoesSituacao"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Todos"
+                  [showClear]="true"
+                  appendTo="body"
+                  (onChange)="filter($event.value)"
+                />
+              </ng-template>
+            </p-column-filter>
+          </div>
+        </th>
+        <th scope="col" style="width: 4rem"></th>
       </tr>
     </ng-template>
-    <ng-template #body let-local>
+
+    <ng-template #body let-linha>
       <tr>
-        <td>{{ local.nome }}</td>
-        <td><p-tag [value]="rotuloTipo(local.tipo)" severity="secondary" /></td>
-        <td>{{ local.endereco }}</td>
-        <td class="acoes">
-          <button pButton type="button" severity="secondary" variant="text" (click)="verPontos(local)">Pontos</button>
-          <button pButton type="button" severity="secondary" variant="text" (click)="editar(local)">Editar</button>
-          @if (local.arquivado) {
-            <button pButton type="button" severity="secondary" variant="text" (click)="reativar(local)">Reativar</button>
+        <td>
+          <span class="nome">{{ linha.nome }}</span>
+          <span class="endereco">{{ enderecoResumido(linha) }}</span>
+        </td>
+        <td><p-tag [value]="rotuloTipo(linha.tipo)" severity="secondary" /></td>
+        <td class="litros">{{ litrosFormatado(linha) }}</td>
+        <td>
+          @if (linha.arquivado) {
+            <p-tag value="Arquivado" severity="secondary" />
           } @else {
-            <button pButton type="button" severity="secondary" variant="text" (click)="arquivar(local)">Arquivar</button>
+            <p-tag value="Ativo" severity="success" />
+          }
+        </td>
+        <td>
+          <button
+            pButton
+            type="button"
+            severity="secondary"
+            variant="text"
+            aria-label="Ações do local"
+            data-testid="acoes"
+            (click)="abrirAcoes($event, linha)"
+          >
+            ⋮
+          </button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="5" class="vazio">
+          @if (linhas().length === 0) {
+            <span data-testid="vazio-sem-cadastro">Nenhum local cadastrado ainda.</span>
+          } @else {
+            <!-- Há locais carregados, então o vazio é do filtro — mensagem e saída próprias (FR-021). -->
+            <span data-testid="vazio-por-filtro">Nenhum resultado para o filtro aplicado.</span>
+            <button pButton type="button" variant="text" (click)="limparFiltros()">Limpar filtros</button>
           }
         </td>
       </tr>
     </ng-template>
-    <ng-template #emptymessage>
-      <tr>
-        <td colspan="4" class="vazio">Nenhum local {{ verArquivados() ? 'arquivado' : 'ativo' }} por aqui.</td>
-      </tr>
-    </ng-template>
   </p-table>
 </section>
+
+<!-- Um único menu para todas as linhas: os itens são montados no clique, conforme a situação. -->
+<p-menu #menuAcoes [model]="acoes()" [popup]="true" appendTo="body" />
 
 <app-local-form
   [visivel]="formVisivel()"
   (visivelChange)="formVisivel.set($event)"
   [local]="emEdicao()"
   (salvo)="aoSalvar($event)"
+/>
+
+<!--
+  Painel de leitura. Litros e valor social vêm do agregado que esta página já buscou: o detalhe
+  não conhece o serviço de impacto e não repete a chamada. As ações voltam como outputs porque o
+  tratamento de erro, o toast e a recarga da lista já vivem aqui.
+-->
+<app-local-detalhe
+  [visivel]="detalheVisivel()"
+  (visivelChange)="detalheVisivel.set($event)"
+  [local]="emDetalhe()"
+  [litros]="litrosDoDetalhe()"
+  [valorSocial]="valorSocialDoDetalhe()"
+  (editar)="editar($event)"
+  (arquivar)="arquivar($event)"
+  (reativar)="reativar($event)"
 />

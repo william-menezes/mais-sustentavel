@@ -1,60 +1,152 @@
-<p-dialog
-  [visible]="visivel()"
-  (visibleChange)="visivel.set($event)"
-  [modal]="true"
-  [header]="titulo()"
-  [style]="{ width: '30rem' }"
-  [draggable]="false"
+<app-form-drawer
+  [visivel]="visivel()"
+  (visivelChange)="visivel.set($event)"
+  [titulo]="titulo()"
+  [trilha]="trilha()"
+  [salvarDesabilitado]="salvarDesabilitado()"
+  [salvando]="salvando()"
+  rotuloSalvar="Salvar local"
+  (salvar)="salvar()"
+  (cancelar)="cancelar()"
 >
-  <form class="local-form" (ngSubmit)="salvar()">
-    @if (erro()) {
-      <p-message severity="error" styleClass="form-erro">{{ erro() }}</p-message>
+  @if (erro()) {
+    <p-message severity="error">{{ erro() }}</p-message>
+  }
+
+  <div class="campo">
+    <label for="nome">Nome</label>
+    <input
+      pInputText
+      id="nome"
+      name="nome"
+      placeholder="Ex.: Condomínio Jardim das Acácias"
+      [ngModel]="nome()"
+      (ngModelChange)="nome.set($event)"
+      fluid
+    />
+  </div>
+
+  <div class="campo">
+    <label for="tipo">Tipo</label>
+    <p-select
+      inputId="tipo"
+      name="tipo"
+      [options]="tipos"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Selecione o tipo"
+      [ngModel]="tipo()"
+      (ngModelChange)="tipo.set($event)"
+      fluid
+    />
+  </div>
+
+  <h3 class="secao">Endereço</h3>
+
+  <div class="campo">
+    <label for="cep">CEP</label>
+    <input
+      pInputText
+      pInputMask="99999-999"
+      id="cep"
+      name="cep"
+      placeholder="00000-000"
+      [ngModel]="cepMascarado()"
+      (ngModelChange)="cepMascarado.set($event)"
+      fluid
+    />
+    @if (consultandoCep()) {
+      <small class="dica">Buscando endereço…</small>
+    } @else if (avisoCep()) {
+      <!-- Aviso, não erro: a consulta é conveniência e nunca impede o cadastro (FR-013). -->
+      <small class="dica aviso" data-testid="aviso-cep">{{ avisoCep() }}</small>
+    } @else {
+      <small class="dica">Informe o CEP para preencher rua, bairro, cidade e UF.</small>
     }
+  </div>
 
+  <div class="par">
     <div class="campo">
-      <label for="nome">Nome</label>
+      <label for="rua">Rua</label>
       <input
         pInputText
-        id="nome"
-        name="nome"
-        placeholder="Ex.: Condomínio Jardim das Acácias"
-        [ngModel]="nome()"
-        (ngModelChange)="nome.set($event)"
+        id="rua"
+        name="rua"
+        placeholder="Rua das Acácias"
+        [ngModel]="rua()"
+        (ngModelChange)="rua.set($event)"
+        fluid
+      />
+    </div>
+
+    <div class="campo estreito">
+      <label for="numero">Número</label>
+      <input
+        pInputText
+        id="numero"
+        name="numero"
+        placeholder="320"
+        [ngModel]="numero()"
+        (ngModelChange)="numero.set($event)"
+        fluid
+      />
+    </div>
+  </div>
+
+  <div class="par">
+    <div class="campo">
+      <label for="complemento">Complemento <span class="opcional">(opcional)</span></label>
+      <input
+        pInputText
+        id="complemento"
+        name="complemento"
+        placeholder="Bloco B, sala 2"
+        [ngModel]="complemento()"
+        (ngModelChange)="complemento.set($event)"
         fluid
       />
     </div>
 
     <div class="campo">
-      <label for="tipo">Tipo</label>
+      <label for="bairro">Bairro</label>
+      <input
+        pInputText
+        id="bairro"
+        name="bairro"
+        placeholder="Santa Mônica"
+        [ngModel]="bairro()"
+        (ngModelChange)="bairro.set($event)"
+        fluid
+      />
+    </div>
+  </div>
+
+  <div class="par">
+    <div class="campo">
+      <label for="cidade">Cidade</label>
+      <input
+        pInputText
+        id="cidade"
+        name="cidade"
+        placeholder="Uberlândia"
+        [ngModel]="cidade()"
+        (ngModelChange)="cidade.set($event)"
+        fluid
+      />
+    </div>
+
+    <div class="campo estreito">
+      <label for="uf">UF</label>
       <p-select
-        inputId="tipo"
-        [options]="tipos"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Selecione o tipo"
-        [ngModel]="tipo()"
-        (ngModelChange)="tipo.set($event)"
-        name="tipo"
+        inputId="uf"
+        name="uf"
+        [options]="ufs"
+        placeholder="MG"
+        [ngModel]="uf()"
+        (ngModelChange)="uf.set($event)"
+        [filter]="true"
         fluid
       />
     </div>
-
-    <div class="campo">
-      <label for="endereco">Endereço</label>
-      <input
-        pInputText
-        id="endereco"
-        name="endereco"
-        placeholder="Rua, número — bairro"
-        [ngModel]="endereco()"
-        (ngModelChange)="endereco.set($event)"
-        fluid
-      />
-    </div>
-  </form>
-
-  <ng-template #footer>
-    <button type="button" pButton severity="secondary" variant="outlined" (click)="cancelar()">Cancelar</button>
-    <button type="button" pButton (click)="salvar()" [disabled]="salvando()">{{ salvando() ? 'Salvando…' : 'Salvar' }}</button>
-  </ng-template>
-</p-dialog>
+  </div>
+</app-form-drawer>

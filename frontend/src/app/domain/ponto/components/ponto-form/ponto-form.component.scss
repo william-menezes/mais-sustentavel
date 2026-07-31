@@ -1,0 +1,57 @@
+.explicacao,
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.resultado {
+  align-items: center;
+}
+
+.dica {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-slate);
+}
+
+.dica.aviso {
+  color: var(--color-amber, #9a6b00);
+}
+
+/* Fundo branco explícito: o QR precisa de contraste máximo para ser lido pela câmera. */
+.qr {
+  width: 100%;
+  max-width: 15rem;
+  aspect-ratio: 1;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* Monoespaçada porque é identificador — alinha e evita confundir 0 com O. */
+.referencia {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.rodape {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+/* Painel sobe de baixo em tela estreita: ações empilhadas e de toque fácil. */
+@media (max-width: 767px) {
+  .rodape {
+    flex-direction: column-reverse;
+  }
+
+  .rodape button {
+    width: 100%;
+  }
+}
