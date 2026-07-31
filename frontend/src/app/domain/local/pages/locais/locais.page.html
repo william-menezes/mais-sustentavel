@@ -23,17 +23,18 @@
   <p-table [value]="locais()" dataKey="id" [loading]="carregando()" [tableStyle]="{ 'min-width': '40rem' }">
     <ng-template #header>
       <tr>
-        <th scope="col">Nome</th>
+        <th scope="col">Local</th>
         <th scope="col" style="width: 12rem">Tipo</th>
-        <th scope="col">Endereço</th>
         <th scope="col" style="width: 14rem">Ações</th>
       </tr>
     </ng-template>
     <ng-template #body let-local>
       <tr>
-        <td>{{ local.nome }}</td>
+        <td>
+          <span class="nome">{{ local.nome }}</span>
+          <span class="endereco">{{ enderecoResumido(local) }}</span>
+        </td>
         <td><p-tag [value]="rotuloTipo(local.tipo)" severity="secondary" /></td>
-        <td>{{ local.endereco }}</td>
         <td class="acoes">
           <button pButton type="button" severity="secondary" variant="text" (click)="verPontos(local)">Pontos</button>
           <button pButton type="button" severity="secondary" variant="text" (click)="editar(local)">Editar</button>

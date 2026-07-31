@@ -44,6 +44,17 @@ export class LocalList implements OnInit {
     this.carregar();
   }
 
+  /**
+   * Endereço em uma linha, para o subtítulo da coluna Local (FR-015).
+   *
+   * Os componentes são filtrados antes de juntar porque locais migrados do texto livre têm
+   * apenas `rua` — sem isso o resumo terminaria em vírgula ou travessão solto.
+   */
+  protected enderecoResumido(local: Local): string {
+    const logradouro = [local.rua, local.numero].filter(Boolean).join(', ');
+    return [logradouro, local.bairro].filter(Boolean).join(' — ');
+  }
+
   protected carregar(): void {
     this.carregando.set(true);
     this.service.listar(this.verArquivados()).subscribe({

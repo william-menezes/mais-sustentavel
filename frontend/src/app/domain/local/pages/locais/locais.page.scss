@@ -26,6 +26,20 @@
     }
   }
 
+  /* Nome e endereço resumido empilhados na mesma célula (FR-015). */
+  .nome {
+    display: block;
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .endereco {
+    display: block;
+    margin-top: 0.125rem;
+    font-size: 0.875rem;
+    color: var(--color-slate);
+  }
+
   .acoes {
     display: flex;
     gap: 0.25rem;

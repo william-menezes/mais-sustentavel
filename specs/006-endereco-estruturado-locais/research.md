@@ -26,11 +26,13 @@ Vale registrar o contexto: **a tabela `local` em produção está vazia** (nenhu
 
 ## D2 — UF como lista fechada
 
-**Decisão**: `enum Uf` no domínio Java com as 27 unidades federativas, persistido como texto via `@Enumerated(EnumType.STRING)`. No frontend, `UFS` em `domain/local/constants/uf.constant.ts`. Sem `CHECK` no banco.
+**Decisão**: `enum Uf` no domínio Java com as 27 unidades federativas, persistido como texto via `@Enumerated(EnumType.STRING)`, **mais `CHECK` na coluna**. No frontend, `UFS` em `domain/local/constants/uf.constant.ts`.
 
-**Racional**: espelha exatamente o tratamento que `TipoLocal` já recebe — mesma forma de persistir, mesmo local de validação, mesmo padrão de constante com rótulo no frontend. Consistência interna vale mais que a proteção extra do `CHECK`, que duplicaria a lista das 27 siglas em dois lugares (enum e DDL) e exigiria migração para qualquer ajuste.
+**Racional**: espelha o tratamento que `TipoLocal` já recebe — e isso inclui o banco. A V3 define `local_tipo_check` restringindo o tipo à lista fechada, então o precedente do projeto é enum no domínio **somado** a `CHECK` no DDL, não apenas o enum.
 
-**Alternativa rejeitada**: `char(2)` com `CHECK (uf IN (...))`. Defesa em profundidade real, mas a lista de UFs é estável e a única escrita passa pela API com Bean Validation. O custo de manutenção não se paga aqui.
+> **Correção de rota.** A primeira versão desta decisão dizia "sem `CHECK`, espelhando `TipoLocal`" — afirmação factualmente errada, porque `TipoLocal` tem `CHECK` desde a V3. O erro só apareceu ao abrir a migração V3 durante a implementação. Como a coluna `uf` é nullable nesta fase (D1), o `CHECK` precisa admitir nulo: `check (uf is null or uf in (...))`.
+
+**Alternativa rejeitada**: apenas o enum, sem `CHECK`. Menos DDL para manter, mas abriria exceção num padrão já estabelecido pela tabela — e a defesa em profundidade do Art. 7.6 favorece a restrição no banco.
 
 ---
 
@@ -128,9 +130,14 @@ A distinção importa: exibir `0 L` quando o serviço de impacto caiu diria ao G
 
 ## D9 — Máscara de CEP
 
-**Decisão**: `p-inputmask` com `mask="99999-999"`, consumindo o evento **`onUnmaskedChange`** para obter o valor sem formatação.
+**Decisão**: diretiva **`pInputMask="99999-999"`** sobre um `<input pInputText>`, com o valor de oito dígitos **derivado** do modelo mascarado.
 
-**Racional**: confirmado na documentação da versão 22 que o `onUnmaskedChange` emite o `rawValue` sem os caracteres da máscara. Isso resolve limpo a tensão entre FR-005 (interface legível, `38408-100`) e o armazenamento canônico de oito dígitos: a interface exibe formatado, a API recebe `38408100`, sem regex de limpeza espalhada pelo componente.
+> **Duas correções sobre a primeira versão desta decisão**, ambas descobertas ao abrir o exemplo `unmask` da documentação durante a implementação:
+>
+> 1. **Não existe componente `<p-inputmask>` nesta versão** — a máscara é uma **diretiva** aplicada a um input nativo: `<input pInputText pInputMask="99999-999">`.
+> 2. **`onUnmaskedChange` foi descartado.** Ele emite a string crua corretamente ao digitar, mas **não dispara em atribuição programática do modelo**. Na edição de um local existente, o CEP pré-preenchido nunca chegaria ao valor cru, e o botão salvar ficaria travado com o formulário visivelmente completo — bug silencioso e difícil de rastrear.
+
+**Racional**: derivar os dígitos do modelo mascarado (`cepMascarado().replace(/\D/g, '')`) tem uma única fonte de verdade e funciona igual nos dois caminhos — digitação e pré-preenchimento. Resolve a mesma tensão entre FR-005 (interface legível, `38408-100`) e o armazenamento canônico de oito dígitos, sem depender de um evento que só cobre metade dos casos.
 
 Atenção ao `autoClear`, que por padrão **limpa o valor quando a máscara está incompleta** ao perder o foco. Para o CEP isso é desejável: um CEP parcial não deve disparar consulta nem ser salvo.
 

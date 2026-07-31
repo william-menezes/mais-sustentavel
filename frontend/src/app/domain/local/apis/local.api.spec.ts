@@ -4,6 +4,19 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { LocalService } from './local.api';
 import { LocalRequest } from '../interfaces/local.interface';
 
+/** Corpo válido com o endereço em componentes; o CEP viaja sem máscara. */
+const CORPO: LocalRequest = {
+  nome: 'Escola A',
+  tipo: 'ESCOLA',
+  cep: '38408100',
+  rua: 'Avenida João Naves de Ávila',
+  numero: '1841',
+  complemento: null,
+  bairro: 'Saraiva',
+  cidade: 'Uberlândia',
+  uf: 'MG',
+};
+
 describe('LocalService', () => {
   let service: LocalService;
   let httpMock: HttpTestingController;
@@ -34,18 +47,24 @@ describe('LocalService', () => {
     req.flush([]);
   });
 
-  it('cadastra via POST /api/locais', () => {
-    const corpo: LocalRequest = { nome: 'Escola A', endereco: 'Rua X, 1', tipo: 'ESCOLA' };
-    service.criar(corpo).subscribe();
+  it('cadastra via POST /api/locais com o endereço em componentes', () => {
+    service.criar(CORPO).subscribe();
     const req = httpMock.expectOne('/api/locais');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(corpo);
+    expect(req.request.body).toEqual(CORPO);
     expect(req.request.withCredentials).toBe(true);
     req.flush({});
   });
 
+  it('envia o CEP sem máscara', () => {
+    service.criar(CORPO).subscribe();
+    const req = httpMock.expectOne('/api/locais');
+    expect(req.request.body.cep).toBe('38408100');
+    req.flush({});
+  });
+
   it('edita via PUT /api/locais/{id}', () => {
-    const corpo: LocalRequest = { nome: 'Novo', endereco: 'Rua Y, 2', tipo: 'EMPRESA' };
+    const corpo: LocalRequest = { ...CORPO, nome: 'Novo', numero: '999' };
     service.editar('abc', corpo).subscribe();
     const req = httpMock.expectOne('/api/locais/abc');
     expect(req.request.method).toBe('PUT');

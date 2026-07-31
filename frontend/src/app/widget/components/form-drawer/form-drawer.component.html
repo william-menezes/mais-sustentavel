@@ -1,0 +1,50 @@
+<!--
+  closable=false: o fechamento é pelo botão Cancelar no rodapé, não por um X solto no topo.
+  dismissible=false: clique na máscara não descarta um formulário preenchido por acidente.
+-->
+<p-drawer
+  [visible]="visivel()"
+  (visibleChange)="visivel.set($event)"
+  [position]="posicao()"
+  [style]="dimensao()"
+  [modal]="true"
+  [closable]="false"
+  [dismissible]="false"
+>
+  <ng-template #header>
+    <div class="cabecalho">
+      @if (trilha().length) {
+        <p-breadcrumb [model]="trilha()" />
+      }
+      <h2>{{ titulo() }}</h2>
+    </div>
+  </ng-template>
+
+  <div class="corpo">
+    <ng-content />
+  </div>
+
+  <ng-template #footer>
+    <div class="acoes">
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        variant="outlined"
+        data-testid="cancelar"
+        (click)="aoCancelar()"
+      >
+        Cancelar
+      </button>
+      <button
+        pButton
+        type="button"
+        data-testid="salvar"
+        [disabled]="salvarDesabilitado() || salvando()"
+        (click)="salvar.emit()"
+      >
+        {{ salvando() ? 'Salvando…' : rotuloSalvar() }}
+      </button>
+    </div>
+  </ng-template>
+</p-drawer>
