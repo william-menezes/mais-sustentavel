@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { Router, provideRouter } from '@angular/router';
 import Aura from '@primeng/themes/aura';
-import { MenuItem } from 'primeng/api';
+import { FilterMetadata, MenuItem } from 'primeng/api';
+import { Table } from 'primeng/table';
 import { providePrimeNG } from 'primeng/config';
-import { of, throwError } from 'rxjs';
+import { delay, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ImpactoService } from '@domain/impacto/apis/impacto.api';
@@ -15,6 +16,7 @@ import { LocalService } from '../../apis/local.api';
 import { Local, LocalNaLista } from '../../interfaces/local.interface';
 
 interface Interno {
+  tabela: () => Table | undefined;
   linhas: () => LocalNaLista[];
   exibidos: () => number;
   litrosFormatado: (linha: LocalNaLista) => string;
@@ -73,13 +75,25 @@ describe('LocalList', () => {
   let pontoFake: { listar: ReturnType<typeof vi.fn> };
 
   function montar(
-    opcoes: { ativos?: Local[]; arquivados?: Local[]; litros?: ValorSocialLocal[] | 'falha' } = {},
+    opcoes: {
+      ativos?: Local[];
+      arquivados?: Local[];
+      litros?: ValorSocialLocal[] | 'falha';
+      /**
+       * Entrega os dados num tique posterior, como a rede faz. Necessário quando o teste olha o
+       * DOM **depois** da filtragem: com `of()` síncrono a carga acontece dentro do `ngOnInit`, a
+       * tabela é verificada uma única vez e o corpo renderizado fica com as linhas pré-filtro.
+       * No navegador a resposta chega depois do primeiro ciclo e a filtragem entra junto com ele.
+       */
+      assincrono?: boolean;
+    } = {},
   ): { fixture: ComponentFixture<LocalList>; comp: Interno } {
     const ativos = opcoes.ativos ?? [];
     const arquivados = opcoes.arquivados ?? [];
+    const entregar = <T,>(valor: T) => (opcoes.assincrono ? of(valor).pipe(delay(0)) : of(valor));
 
     localFake = {
-      listar: vi.fn().mockImplementation((arq: boolean) => of(arq ? arquivados : ativos)),
+      listar: vi.fn().mockImplementation((arq: boolean) => entregar(arq ? arquivados : ativos)),
       arquivar: vi.fn().mockReturnValue(of({})),
       reativar: vi.fn().mockReturnValue(of({})),
     };
@@ -131,6 +145,32 @@ describe('LocalList', () => {
 
     expect(comp.exibidos()).toBe(1);
     expect(comp.linhas().length).toBe(2);
+  });
+
+  it('deixa o filtro semeado legível para o menu do funil', () => {
+    // O defeito que este teste tranca: `tabela.filter()` grava a forma de LINHA (objeto único) num
+    // filtro de coluna em modo MENU, que espera um ARRAY de condições, e o effect do input
+    // `filters` descartava o valor logo depois. A tabela ficava corretamente filtrada enquanto o
+    // funil e o painel diziam que não havia filtro — e o painel, que percorre as condições com
+    // `@for`, não tem o que percorrer.
+    const { comp } = montar({ ativos: [ATIVO], arquivados: [ARQUIVADO] });
+    const condicoes = comp.tabela()?.filters['situacao'];
+
+    expect(Array.isArray(condicoes)).toBe(true);
+    expect((condicoes as FilterMetadata[])[0].value).toBe('ATIVO');
+    // A filtragem de fato aplicada tem de concordar com o que o menu mostra.
+    expect(comp.exibidos()).toBe(1);
+  });
+
+  it('declara condição para toda coluna filtrável, não só para situação', () => {
+    // O binding substitui o mapa inteiro de filtros. Uma coluna ausente perderia a condição que o
+    // PrimeNG cria sozinho no `initFieldFilterConstraint` e abriria o painel do funil vazio.
+    const { comp } = montar({ ativos: [ATIVO] });
+    const filtros = comp.tabela()?.filters ?? {};
+
+    ['nome', 'tipo', 'litros', 'situacao'].forEach((campo) => {
+      expect(Array.isArray(filtros[campo])).toBe(true);
+    });
   });
 
   it('mostra tudo ao limpar os filtros', () => {
@@ -200,9 +240,14 @@ describe('LocalList', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="vazio-por-filtro"]')).toBeFalsy();
   });
 
-  it('avisa quando o filtro não casa com nenhum local carregado', () => {
+  it('avisa quando o filtro não casa com nenhum local carregado', async () => {
     // Existe local, mas o filtro padrão (ativo) não casa com um acervo só de arquivados.
-    const { fixture } = montar({ arquivados: [ARQUIVADO] });
+    // Carga assíncrona porque a asserção é sobre o DOM depois de filtrar — ver `montar`.
+    const { fixture } = montar({ arquivados: [ARQUIVADO], assincrono: true });
+    // Espera o macrotask do `delay(0)`: em modo zoneless o `whenStable` não conhece temporizador de
+    // rxjs, então aguardar por ele passaria direto, antes de os dados chegarem.
+    await new Promise((resolver) => setTimeout(resolver, 0));
+    fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="vazio-por-filtro"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[data-testid="vazio-sem-cadastro"]')).toBeFalsy();

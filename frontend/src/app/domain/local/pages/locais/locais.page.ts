@@ -1,7 +1,13 @@
 import { AfterViewInit, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MenuItem, MessageService } from 'primeng/api';
+import {
+  FilterMatchMode,
+  FilterMetadata,
+  FilterOperator,
+  MenuItem,
+  MessageService,
+} from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
 import { SelectModule } from 'primeng/select';
@@ -52,7 +58,28 @@ export class LocalList implements OnInit, AfterViewInit {
   private readonly tabela = viewChild<Table>('tabela');
   private readonly menuAcoes = viewChild<Menu>('menuAcoes');
   private readonly formatador = new Intl.NumberFormat('pt-BR');
-  private filtroSemeado = false;
+
+  /**
+   * Estado inicial dos filtros de coluna, **declarado** em vez de aplicado por código.
+   *
+   * <p>A forma importa. Com `filterDisplay="menu"` o PrimeNG guarda um **array de condições** por
+   * campo — é o que o `initFieldFilterConstraint` dele cria — e o painel do funil percorre esse
+   * array com `@for`. A API `tabela.filter(valor, campo, modo)`, que a própria biblioteca chama de
+   * *legacy* num comentário do `hasFilter`, grava a forma de **linha**: um objeto único. Além
+   * disso, o `effect` que sincroniza o input `filters` roda depois e substitui o mapa inteiro, de
+   * modo que o valor aplicado por código simplesmente desaparecia: a tabela ficava filtrada
+   * enquanto o funil e o menu diziam que não havia filtro nenhum.
+   *
+   * <p>Todas as colunas filtráveis estão aqui, não só `situacao`: o binding troca o mapa inteiro, e
+   * uma coluna ausente perderia a condição que o PrimeNG cria sozinho — abrindo o painel vazio.
+   */
+  protected readonly filtrosIniciais: Record<string, FilterMetadata[]> = {
+    nome: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH, operator: FilterOperator.AND }],
+    tipo: [{ value: null, matchMode: FilterMatchMode.EQUALS, operator: FilterOperator.AND }],
+    litros: [{ value: null, matchMode: FilterMatchMode.EQUALS, operator: FilterOperator.AND }],
+    // Já chega em "ativo" (FR-018 / RN-G-06), sem abrir exceção na regra de filtro por coluna.
+    situacao: [{ value: 'ATIVO', matchMode: FilterMatchMode.EQUALS, operator: FilterOperator.AND }],
+  };
 
   protected readonly locais = signal<Local[]>([]);
   /**
@@ -97,13 +124,11 @@ export class LocalList implements OnInit, AfterViewInit {
   }
 
   /**
-   * Segunda tentativa de semear o filtro. Necessária porque a ordem depende do tempo de resposta:
-   * com dados assíncronos o `subscribe` roda com a tabela já renderizada; com dados síncronos ele
-   * roda dentro do `ngOnInit`, quando o `viewChild` ainda não existe. As duas chamadas são seguras
-   * porque `filtroSemeado` só é marcado quando o filtro é de fato aplicado.
+   * Pede a filtragem do estado declarado em {@link filtrosIniciais}. O binding entrega os valores à
+   * tabela, mas não dispara a filtragem sozinho — e só a partir daqui o `viewChild` existe.
    */
   ngAfterViewInit(): void {
-    this.semearFiltroDeSituacao();
+    this.tabela()?._filter();
   }
 
   /**
@@ -166,27 +191,15 @@ export class LocalList implements OnInit, AfterViewInit {
             detail: 'Não foi possível consultar o volume por local.',
           });
         }
-        this.semearFiltroDeSituacao();
+        // Reaplica sobre o conjunto novo: recarregar depois de arquivar não deve mostrar de volta
+        // o que o filtro do Gestor exclui.
+        this.tabela()?._filter();
       },
       error: () => {
         this.carregando.set(false);
         this.notificarErro('Não foi possível carregar os locais.');
       },
     });
-  }
-
-  /**
-   * Define o filtro inicial em "ativo" (FR-018). Só na primeira carga: recarregar depois de
-   * arquivar não deve desfazer o filtro que o Gestor escolheu.
-   */
-  private semearFiltroDeSituacao(): void {
-    const tabela = this.tabela();
-    // Sem tabela ainda, não marca como semeado — o ngAfterViewInit tenta de novo.
-    if (this.filtroSemeado || !tabela || this.locais().length === 0) {
-      return;
-    }
-    this.filtroSemeado = true;
-    tabela.filter('ATIVO', 'situacao', 'equals');
   }
 
   protected limparFiltros(): void {
